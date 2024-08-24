@@ -5,22 +5,35 @@ class MartianChessBoard:
     width: int      # The width of the board
     height: int     # The height of the board
     board: list     # Stores the current board state
+    players: list   # List of players who are playing on this board
+    points: dict    # Maps playerID to number of points
+    last_move: dict # Stores the last move made (player, from_x, from_y, to_x, to_y, crosses)
 
 
     def __init__(
         self, 
         width: int | None = 4,  # Width of the board, defaults to 4
         height: int | None = 8, # Height of the board, defaults to 8
-        default_setup: bool | None = True   # Whether or not to automatically place the default pieces for a 2 player game.
+        default_setup: bool | None = True,  # Whether or not to automatically place the default pieces for a 2 player game.
+        custom_players: list | None = None  # Option to provide your own list of player IDs
     ):
         # Set board parameters
         self.width = width
         self.height = height
+        self.last_move = {}
+        self.points = {}
 
         # Initialize board
         self.board = [[0 for y in range(height)] for x in range(width)]
         if default_setup:
             self._place_default_pieces()
+
+        # Add players
+        self.players = [PlayerID.TOP, PlayerID.BOTTOM]  # Default players
+        if custom_players:
+            self.players = custom_players
+        for player in self.players:
+            self.points[player] = 0
 
 
     def place(self, piece, x, y):
@@ -37,7 +50,7 @@ class MartianChessBoard:
 
     def _place_default_pieces(self):
         """Manually places the pieces for the default game"""
-        pieces_to_place = [(3,0,0),(3,1,0),(3,0,1),(2,2,0),(2,1,1),(2,0,2),(1,1,2),(1,2,2),(1,2,1)]
+        pieces_to_place = [(3,0,0)]#,(3,1,0),(3,0,1),(2,2,0),(2,1,1),(2,0,2),(1,1,2),(1,2,2),(1,2,1)]
         # Place top left pieces
         for piece in pieces_to_place:
             self.place(piece[0],piece[1],piece[2])
@@ -120,10 +133,17 @@ class MartianChessBoard:
         # Enumerate possible moves
         for move in moves:
             cx, cy = move[0], move[1]
+
+            if self.last_move.get("crosses") == True: # Check for move rejection
+                if self.last_move["to_x"] == x and self.last_move["to_y"] == y and self.last_move["from_x"] == cx and self.last_move["from_y"] == cy:
+                    continue # Exclude illegal move
+
             if self.get_space(cx, cy) == 0: # Is it an empty space?
                 options.append((cx, cy))
+
             elif self.can_player_take(player, cx, cy): # Can we take enemy piece?
                 options.append((cx, cy))
+
             elif self.can_field_promote(player, x, y, cx, cy): # Can we do a field promotion?
                 options.append((cx, cy))
 
@@ -165,31 +185,65 @@ class MartianChessBoard:
         if pieceA == 1 and pieceB == 1:
             # Field promotion to drone possible
             return 2
-    
+        
+
+    def is_game_over(self):
+        """Scans the board state and determines if the game is over, if so, returns playerID of winner"""
+        game_over = False
+        for player in self.players:
+            pieces = self.get_controlled_pieces(player)
+            if len(pieces) == 0:
+                game_over = True # Game is over
+        if not game_over:
+            return False # Let the game go on.
+        
+        # Figure out who won
+        max_points = max(self.points.values()) # Calculate max points a player has
+        winners = []
+        for player, player_points in self.points.items():
+            if player_points >= max_points:
+                winners.append(player)
+
+        assert len(winners) > 0 # Sanity check
+        if len(winners) == 1:
+            return winners[0] # Congratulations!
+        
+        # Tie breaker
+        if len(winners) > 1:
+            winner = self.last_move.get("player") # In the event of a tie, the person who made the game end wins.
+            if not winner:
+                raise Exception("No winner? (Did the board start empty?)")
+            return winner # Congratulations!
+
 
     def make_move(self, player, piece_x, piece_y, to_x, to_y):
         """Attempts to move the given piece"""
-        # Assertions
-        if not self.check_piece_ownership(player, piece_x, piece_y):
-            raise Exception("Piece is not owned by player.")
-        if self.get_space(to_x, to_y) == -1:
-            raise Exception("Attempt to move out of bounds")
-        
-        # TODO: Prevent No Undo With Two: In a 2-player game, your opponent may not “reject” your move; if one player moves a piece across the canal, the other can’t move it back to the same square it came from.
-        
-        # Check possible actions
+        # Check if move is legal
         piece_type = self.get_space(piece_x,piece_y)
+        options = self.get_piece_options(player, piece_type, piece_x, piece_y)
+        if (to_x, to_y) not in options:
+            # Invalid move
+            return False
+
+        # Perform move action
         if self.get_space(to_x, to_y) == 0:
             # Move to empty space
             self.place(0, piece_x, piece_y)
             self.place(piece_type, to_x, to_y)
         elif not self.check_piece_ownership(player, to_x, to_y):
             # Take enemy piece
+            self.points[player] += self.get_space(to_x, to_y) # Score points
             self.place(0, piece_x, piece_y)
             self.place(piece_type, to_x, to_y)
-            # TODO: Keep score
         elif self.can_field_promote(player, piece_x, piece_y, to_x, to_y):
             # Field promote
             promote_to = self.can_field_promote(player, piece_x, piece_y, to_x, to_y)
             self.place(0, piece_x, piece_y)
             self.place(promote_to, to_x, to_y)
+        else:
+            raise Exception("No action handler for move.")
+        
+        # Update last move
+        crosses_canal = not self.check_piece_ownership(player, to_x, to_y)
+        self.last_move = {"player": player, "from_x": piece_x, "from_y": piece_y, "to_x": to_x, "to_y": to_y, "crosses": crosses_canal}
+        return True

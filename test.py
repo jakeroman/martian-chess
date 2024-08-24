@@ -36,9 +36,18 @@ while True:
     tox = int(values[0])
     toy = int(values[1])
 
-    board.make_move(player, fromx, fromy, tox, toy)
-
-    if player == PlayerID.TOP:
-        player = PlayerID.BOTTOM
+    if board.make_move(player, fromx, fromy, tox, toy):
+        # Switch players
+        if player == PlayerID.TOP:
+            player = PlayerID.BOTTOM
+        else:
+            player = PlayerID.TOP
     else:
-        player = PlayerID.TOP
+        # Invalid move
+        print("Invalid move, try again.")
+
+    # Check for game over
+    winner = board.is_game_over()
+    if winner:
+        print(f"Game over! {winner.upper()} is victorious!")
+        break
