@@ -50,7 +50,7 @@ class MartianChessBoard:
 
     def _place_default_pieces(self):
         """Manually places the pieces for the default game"""
-        pieces_to_place = [(3,0,0)]#,(3,1,0),(3,0,1),(2,2,0),(2,1,1),(2,0,2),(1,1,2),(1,2,2),(1,2,1)]
+        pieces_to_place = [(3,0,0),(3,1,0),(3,0,1),(2,2,0),(2,1,1),(2,0,2),(1,1,2),(1,2,2),(1,2,1)]
         # Place top left pieces
         for piece in pieces_to_place:
             self.place(piece[0],piece[1],piece[2])
