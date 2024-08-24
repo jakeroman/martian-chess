@@ -1,8 +1,44 @@
 from game.board import MartianChessBoard
+from game.enum import PlayerID
 from game.view import MartianChessView
 
 
 board = MartianChessBoard()
 view = MartianChessView()
-view.redraw(board.board)
-input() # halt to keep board view open
+
+player = PlayerID.TOP
+while True:
+    print(f"=== PLAYER {player.upper()} ===")
+
+    view.redraw(board.board)
+    options = board.get_player_options(player)
+
+    print("What piece would you like to move? ", end="")
+    str = input()
+    values = str.split(" ")
+    fromx = int(values[0])
+    fromy = int(values[1])
+
+    print("Options: ", end="")
+    piece_options = 0
+    for opt in options:
+        if opt[0] == fromx and opt[1] == fromy:
+            print(f"({opt[2],opt[3]}), ", end="")
+            piece_options += 1
+    if piece_options == 0:
+        print("None")
+        continue
+    print()
+
+    print("Where would you like to move it? ", end="")
+    str = input()
+    values = str.split(" ")
+    tox = int(values[0])
+    toy = int(values[1])
+
+    board.make_move(player, fromx, fromy, tox, toy)
+
+    if player == PlayerID.TOP:
+        player = PlayerID.BOTTOM
+    else:
+        player = PlayerID.TOP
