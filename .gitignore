@@ -1,0 +1,21 @@
+# Ignore Python bytecode files
+*.pyc
+
+# Ignore Jupyter Notebook checkpoint directories
+.ipynb_checkpoints/
+
+# Ignore local file data
+files/
+data/
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore environment variables
+.env
+
+# Ignore pytest cache
+.pytest_cache
+
+# Ignore vscode settings
+.vscode
