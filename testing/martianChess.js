@@ -243,12 +243,15 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         return pieces
     },
 
+    // --- Supporting functions for makeMove function ---
+
     place: function(piece, x, y) {
         // Place a piece at a given position on the board
         self.board[x][y] = piece
     },
 
     getPlayerScore: function(playerId) {
+        // Return the individual score of a player
         if(self.playerId = "Left") {
             return this.topScore
         }
@@ -256,6 +259,8 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             return this.bottomScore
         }
     },
+
+    // --- End of supporting functions for makeMove ---
 
     makeMove: function(playerId, x, y, toX, toY) {
         // Moves a selected piece to chosen position if possible
@@ -288,7 +293,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
         // Update the last move
         crossesCanal = !self.checkSpaceOwnership(playerId, toX, toY)
-        self.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal}
+        self.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal} // Dont know if this is how this works in JavaScript
         return true
     },
 });
