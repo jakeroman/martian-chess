@@ -242,4 +242,53 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
         return pieces
     },
+
+    place: function(piece, x, y) {
+        // Place a piece at a given position on the board
+        self.board[x][y] = piece
+    },
+
+    getPlayerScore: function(playerId) {
+        if(self.playerId = "Left") {
+            return this.topScore
+        }
+        else {
+            return this.bottomScore
+        }
+    },
+
+    makeMove: function(playerId, x, y, toX, toY) {
+        // Moves a selected piece to chosen position if possible
+        pieceType = self.getSpace(x, y)
+        options = self.getOptionsForPiece(playerId, pieceType, x, y)
+
+        if(!(toX, toY) in options) {
+            // Illegal move
+            return false
+        }
+        
+        // Perform Legal moves
+        if(self.getSpace(toX, toY) == 0) {
+            // Move to an empty space
+            self.place(0, x, y)
+            self.place(pieceType, toX, toY)
+        }
+        else if(self.canPlayerTake(playerId, toX, toY)) {
+            // Space occupied by enemy piece that will be taken
+            self.getPlayerScore(playerId) += self.getSpace(toX, toY)
+            self.place(0, x, y)
+            self.place(pieceType, toX, toY)
+        }
+        else if(self.canFieldPromote(playerId, x, y, toX, toY)) {
+            // Give piece a field promotion
+            promoteTo = self.canFieldPromote(playerId, x, y, toX, toY)
+            self.place(0, x, y)
+            self.place(promoteTo, toX, toY)
+        }
+
+        // Update the last move
+        crossesCanal = !self.checkSpaceOwnership(playerId, toX, toY)
+        self.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal}
+        return true
+    },
 });
