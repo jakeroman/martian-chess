@@ -214,7 +214,7 @@ class MartianChessBoard:
         
 
     def reset_board(self):
-        """Resets the board back to it's original state"""
+        """Resets the board back to its original state"""
         # Set default board state
         self.board = [[0 for y in range(self.height)] for x in range(self.width)]
         if self.default_pieces:
