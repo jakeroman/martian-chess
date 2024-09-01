@@ -15,10 +15,10 @@ while True:
 
     print("What piece would you like to move? ", end="")
     str = input()
+
     values = str.split(" ")
     fromx = int(values[0])
     fromy = int(values[1])
-    # hello is me
 
     print("Options: ", end="")
     piece_options = 0
