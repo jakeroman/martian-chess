@@ -297,3 +297,29 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         return true
     },
 });
+
+/**
+ * Gets an HTML Element containing the basic game options for a 2-dimensional grid.
+ */
+function createBasicGridGameOptionsForMartianChess() {
+    //do some normalization for games with only one size parameter (e.g. Atropos)
+    var container = document.createElement("div");
+    var leftPlayerElement = document.createDocumentFragment();
+    leftPlayerElement.appendChild(document.createTextNode("(Top plays first.)"));
+    leftPlayerElement.appendChild(document.createElement("br"));
+    var leftRadio = getRadioPlayerOptions(CombinatorialGame.prototype.LEFT);
+    leftPlayerElement.appendChild(leftRadio);
+    container.appendChild(createGameOptionDiv("Top:", leftPlayerElement));
+
+    var rightRadio = getRadioPlayerOptions(CombinatorialGame.prototype.RIGHT);
+    container.appendChild(createGameOptionDiv("Bottom:", rightRadio));
+
+    var startButton = document.createElement("input");
+    startButton.type = "button";
+    startButton.id = "starter";
+    startButton.value = "Start Game";
+    startButton.onclick = newGame;
+    container.appendChild(startButton);
+
+    return container;
+}
