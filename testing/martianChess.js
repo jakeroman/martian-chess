@@ -7,6 +7,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         this.topScore = 0
         this.bottomScore = 0
         this.lastMove = false // Once a move is made it will be replaced with [fromX, fromY, toX, toY, crossesCanal, player]
+        this.playerNames = ["Top", "Bottom"]
 
         // Create standard martian chess board
         this.board = []
@@ -19,10 +20,10 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
         // Default pieces to place
         var piecesToPlace = [[3,0,0],[3,1,0],[3,0,1],[2,2,0],[2,1,1],[2,0,2],[1,1,2],[1,2,2],[1,2,1]]
-        for (let i = 0; i < length(piecesToPlace); i++) {
+        for (let i = 0; i < piecesToPlace.length; i++) {
             var piece = piecesToPlace[i]
             this.board[piece[1]][piece[2]] = piece[0] // Place top left pieces
-            this.board[this.width-piece[1]][this.height-piece[2]] = piece[0] // Place bottom right pieces
+            this.board[(this.width-1)-piece[1]][(this.height-1)-piece[2]] = piece[0] // Place bottom right pieces
         }
     },
 
@@ -66,6 +67,18 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
         // Woohoo they match
         return true
+    },
+
+    getWidth: function() {
+        return this.width;
+    },
+    
+    getHeight: function() {
+        return this.height;
+    },
+
+    getPlayerName: function(playerIndex) {
+        return this.playerNames[playerIndex];
     },
     
     getOptionsForPlayer: function(playerId) {
@@ -323,3 +336,18 @@ function createBasicGridGameOptionsForMartianChess() {
 
     return container;
 }
+
+/**
+ * The start game function which fires up a new round of Martian Chess.
+ */
+function newMartianChessGame() {
+    var viewFactory = new GridDistanceGameInteractiveViewFactory(); // TODO: Once we have a view, plug it's factory in here.
+    var playDelay = 1000;
+    var controlForm = $('gameOptions');
+    var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
+    var rightPlayer =  eval(getSelectedRadioValue(controlForm.elements['rightPlayer']));
+    const players = [leftPlayer, rightPlayer];
+    var game = new MartianChess();
+    var ref = new Referee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
+    
+};
