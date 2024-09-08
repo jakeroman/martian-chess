@@ -23,17 +23,14 @@ class MartianChessBoard:
         self.last_move = {}
         self.points = {}
 
-        # Initialize board
-        self.board = [[0 for y in range(height)] for x in range(width)]
-        if default_setup:
-            self._place_default_pieces()
-
         # Add players
         self.players = [PlayerID.TOP, PlayerID.BOTTOM]  # Default players
         if custom_players:
             self.players = custom_players
-        for player in self.players:
-            self.points[player] = 0
+
+        # Initialize board
+        self.default_pieces = default_setup
+        self.reset_board()
 
 
     def place(self, piece, x, y):
@@ -214,6 +211,19 @@ class MartianChessBoard:
             if not winner:
                 raise Exception("No winner? (Did the board start empty?)")
             return winner # Congratulations!
+        
+
+    def reset_board(self):
+        """Resets the board back to its original state"""
+        # Set default board state
+        self.board = [[0 for y in range(self.height)] for x in range(self.width)]
+        if self.default_pieces:
+            self._place_default_pieces()
+
+        # Reset game variables
+        for player in self.players:
+            self.points[player] = 0
+        self.last_move = {}
 
 
     def make_move(self, player, piece_x, piece_y, to_x, to_y):
