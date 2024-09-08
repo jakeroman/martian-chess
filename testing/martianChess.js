@@ -351,8 +351,6 @@ function newMartianChessGame() {
     var ref = new Referee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
     
 };
-    }
-});
 
 class MartianChessView { // view class -cam
     constructor() {
@@ -399,6 +397,21 @@ class MartianChessView { // view class -cam
 
     }
 }
+
+var MartianChessViewFactory = Class.create({ // MartianChess ViewFactory
+
+    initialize: function() {
+    },
+
+    getInteractiveBoard: function(position) {
+        return new MartianChessView(position);
+    },
+
+    getView: function(position) {
+        return this.getInteractiveBoard(position);
+    },
+
+});
 
     //     constructor(position) { // Position constructor (makes the position that's passed in, the new object's position data member and starts the tile and the move as undefined) 
     //         this.position = position; 
