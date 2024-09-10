@@ -341,7 +341,7 @@ function createBasicGridGameOptionsForMartianChess() {
  * The start game function which fires up a new round of Martian Chess.
  */
 function newMartianChessGame() {
-    var viewFactory = new GridDistanceGameInteractiveViewFactory(); // TODO: Once we have a view, plug it's factory in here.
+    var viewFactory = new MartianChessViewFactory(); // TODO: Once we have a view, plug it's factory in here.
     var playDelay = 1000;
     var controlForm = $('gameOptions');
     var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
@@ -352,20 +352,80 @@ function newMartianChessGame() {
     
 }
 
-class MartianChessView { // view class -cam
-    constructor() {
-        this.container = document.getElementById('chess-board') // Make container element witht this -cam
-        this.images = []
+const MartianChessView = Class.create({
+    initialize: function(position) {
+        this.position = position;
+        this.selectedTile = undefined;
+    },
 
-        // Now we have to load the images and store them
-        var imageFiles = ["empty.png", "pawn.png", "drone.png", "queen.png"]
-
-        for (let img of imageFiles) {
-            var image = new Image()
-            image.src = 'game/images/${img}'
-            this.images.push(image)
+    draw(containerElement, listener) {
+        //clear out the children of containerElement
+        while (containerElement.hasChildNodes()) {
+            containerElement.removeChild(containerElement.firstChild);
         }
-    }
+        var svgNS = "http://www.w3.org/2000/svg";
+        var boardSvg = document.createElementNS(svgNS, "svg");
+        //now add the new board to the container
+        containerElement.appendChild(boardSvg);
+        boardSvg.setAttributeNS(null, "width", 10 + this.position.height * 100);
+        boardSvg.setAttributeNS(null, "height", 10 + this.position.width * 100);
+
+        //draw the checker tiles
+        for (var i = 0; i < this.position.height; i++) {
+            for (var j = 0; j < this.position.width; j++) {
+                var parityString = "even";
+                if ((i+j) % 2 == 1) {
+                    parityString = "odd";
+                }
+                var checkerTile = document.createElementNS(svgNS,"rect");
+                checkerTile.setAttributeNS(null, "x", (i * 100) + "");
+                checkerTile.setAttributeNS(null, "y", (j * 100) + "");
+                checkerTile.setAttributeNS(null, "height", "100");
+                checkerTile.setAttributeNS(null, "width", "100");
+                checkerTile.setAttributeNS(null, "class", parityString + "Checker");
+                boardSvg.appendChild(checkerTile);
+                if (listener != undefined) {
+                    var player = listener;
+                    checkerTile.onclick = function(event) {player.handleClick(event);}
+                }
+
+            }
+        }
+
+        //draw the dominoes
+        for (var playerId = 0; playerId < 2; playerId++) {
+            for (var i =0; i < this.position.dominoes[playerId].length; i++) {
+                var domino = this.position.dominoes[playerId][i];
+                var column = domino[0];
+                var row = domino[1];
+                var dominoRect = document.createElementNS(svgNS, "rect");
+                dominoRect.setAttributeNS(null, "x", new String(10 + column * 100));
+                dominoRect.setAttributeNS(null, "y", new String(10 + row * 100));
+                //these two lines round the corners
+                dominoRect.setAttributeNS(null, "rx", "10");
+                dominoRect.setAttributeNS(null, "ry", "10");
+                dominoRect.setAttributeNS(null, "width", new String(100 * (1 + playerId) - 20));
+                dominoRect.setAttributeNS(null, "height", new String(100 * (2 - playerId) - 20));
+                dominoRect.setAttributeNS(null, "class", "domino");
+                boardSvg.appendChild(dominoRect);
+            }
+        }
+
+        //draw the blocked spaces
+        for (var i = 0; i < this.position.blockedSpaces.length; i++) {
+            // console.log("Adding the block: " + this.position.blockedSpaces[i]);
+            var block = this.position.blockedSpaces[i];
+            var column = block[0];
+            var row = block[1];
+            var blockRect = document.createElementNS(svgNS, "rect");
+            blockRect.setAttributeNS(null, "x", new String(5 + column * 100));
+            blockRect.setAttributeNS(null, "y", new String(5 + row * 100));
+            blockRect.setAttributeNS(null, "width", "90");
+            blockRect.setAttributeNS(null, "height", "90");
+            blockRect.setAttributeNS(null, "class", "domino");
+            boardSvg.appendChild(blockRect);
+        }
+    },
 
     redraw(boardState) { // gets rid of board contents -cam
         while (this.container.firstChild) {
@@ -396,9 +456,9 @@ class MartianChessView { // view class -cam
     
         }
     }
-}
+});
 
-var MartianChessViewFactory = Class.create({ // MartianChess ViewFactory
+const MartianChessViewFactory = Class.create({ // MartianChess ViewFactory
 
     initialize: function() {
     },
