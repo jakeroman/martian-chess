@@ -341,7 +341,7 @@ function createBasicGridGameOptionsForMartianChess() {
  * The start game function which fires up a new round of Martian Chess.
  */
 function newMartianChessGame() {
-    var viewFactory = new MartianChessViewFactory(); // TODO: Once we have a view, plug it's factory in here.
+    var viewFactory = new MartianChessViewFactory();
     var playDelay = 1000;
     var controlForm = $('gameOptions');
     var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
@@ -392,7 +392,7 @@ const MartianChessView = Class.create({
             }
         }
 
-        //draw the dominoes
+        // Draw pieces (TODO: Rework this to draw the martian chess pieces)
         for (var playerId = 0; playerId < 2; playerId++) {
             for (var i =0; i < this.position.dominoes[playerId].length; i++) {
                 var domino = this.position.dominoes[playerId][i];
