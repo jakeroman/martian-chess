@@ -246,7 +246,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             if (this.getSpace(cx, cy) == 0) { // Move to empty space
                 options.push([cx, cy])
             }
-            else if (this.canPlayerTake(playerId, x, y)) { // Take enemy piece
+            else if (this.canPlayerTake(playerId, cx, cy)) { // Take enemy piece
                 options.push([cx, cy])
             }
             else if (this.canFieldPromote(playerId, x, y, cx, cy)) {
@@ -342,7 +342,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
 
         // Update the last move
-        var crossesCanal = !this.checkSpaceOwnership(playerId, toX, toY)
+        var crossesCanal = this.checkSpaceOwnership(playerId, toX, toY)
         this.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal} // Dont know if this is how this works in JavaScript
         return true
     },
