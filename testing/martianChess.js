@@ -2,8 +2,8 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
     // Core object functions
     initialize: function() {
         // Set variables
-        this.width = 8
-        this.height = 4
+        this.width = 4
+        this.height = 8
         this.topScore = 0
         this.bottomScore = 0
         this.lastMove = false // Once a move is made it will be replaced with [fromX, fromY, toX, toY, crossesCanal, player]
@@ -83,14 +83,22 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
     
     getOptionsForPlayer: function(playerId) {
         // Returns a list of all moves a player can currently make in format [x, y, toX, toY]
-        playerPieces = self.getControlledPieces(playerId)
-        options = []
+        playerPieces = this.getControlledPieces(playerId)
+        var options = []
         for (var pieceId = 0; pieceId < playerPieces.length; pieceId++) {
-            pieceType, x, y = playerPieces[pieceId][0],playerPieces[pieceId][1],playerPieces[pieceId][2]
-            pieceOptions = self.getOptionsForPiece(playerId, pieceType, x, y)
-            for (var optionId = 0; optionId < pieceOptions.length; optionId++) {
+            var pieceType = playerPieces[pieceId][0]
+            var x = playerPieces[pieceId][1] 
+            var y = playerPieces[pieceId][2]
+            pieceOptions = this.getOptionsForPiece(playerId, pieceType, x, y)
+            var numOptions = pieceOptions.length
+            for (var optionId = 0; optionId < numOptions; optionId++) {
                 pieceOption = pieceOptions[optionId]
-                options.push([x, y, pieceOption[0], pieceOption[1]])
+
+                // Clone the board and make the move
+                option = this.clone()
+                console.log(pieceOption)
+                option.makeMove(playerId, x, y, pieceOption[0], pieceOption[1])
+                options.push(option)
             }
         }
         return options
@@ -99,8 +107,8 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
     // Supporting functions
     getSpace: function(x, y) {
         // Gets the piece at this space
-        if (x >= 0 && y >= 0 && x < self.width && y < self.height) {
-            return self.board[x][y]
+        if (x >= 0 && y >= 0 && x < this.width && y < this.height) {
+            return this.board[x][y]
         }
         else {
             return -1 // Out of bounds
@@ -109,25 +117,28 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     getControlArea: function(playerId) {
         // Returns the [x1,y1,x2,y2] area that a specific player has control over
-        focus_x1, focus_y1, focus_x2, focus_y2 = 0,0,self.width-1,self.height-1
+        var focus_x1 = 0 
+        var focus_y1 = 0
+        var focus_x2 = this.width-1
+        var focus_y2 = this.height-1
         if (playerId == CombinatorialGame.prototype.LEFT) {
             // Top player
-            focus_y2 = Math.floor((self.height/2)-1)
+            focus_y2 = Math.floor((this.height/2)-1)
         }
         else if (playerId == CombinatorialGame.prototype.RIGHT) {
             // Bottom player
-            focus_y1 = Math.floor(self.height/2)
-            focus_y2 = Math.floor(self.height-1)
+            focus_y1 = Math.floor(this.height/2)
+            focus_y2 = Math.floor(this.height-1)
         }
         return [focus_x1, focus_y1, focus_x2, focus_y2]
     },
 
     canPlayerTake: function(playerId, x, y) {
         // Returns true if the provided player is able to take a specific piece on the board
-        if (self.getSpace(x, y) < 0) {
+        if (this.getSpace(x, y) < 0) {
             return false // Out of bounds
         }
-        else if (self.checkSpaceOwnership(playerId, x, y)) {
+        else if (this.checkSpaceOwnership(playerId, x, y)) {
             return false // Can't take own piece
         }
         return true // All good
@@ -135,12 +146,12 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     canFieldPromote: function(playerId, x, y, toX, toY) {
         // Checks if the player can perform a field promoting by moving piece x,y to toX,toY
-        if (!self.checkSpaceOwnership(playerId, x, y) || !self.checkSpaceOwnership(playerId, toX, toY)) {
+        if (!this.checkSpaceOwnership(playerId, x, y) || !this.checkSpaceOwnership(playerId, toX, toY)) {
             return false // If player doesn't own both pieces field promotion cannot continue
         }
 
-        pieceA = self.getSpace(piece_x, piece_y)
-        pieceB = self.getSpace(to_x, to_y)
+        pieceA = this.getSpace(piece_x, piece_y)
+        pieceB = this.getSpace(to_x, to_y)
         if ((pieceA == 1 && pieceB == 2) || (pieceA == 2 && pieceB == 1)) {
             // Field promotion to queen possible
             return 3
@@ -153,38 +164,39 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     checkSpaceOwnership: function(playerId, x, y) {
         // Returns true if the player has control over the square at X,Y
-        control_area = self.getControlArea(playerId)
+        var control_area = this.getControlArea(playerId)
         return (x >= control_area[0] && x <= control_area[2] && y >= control_area[1] && y <= control_area[4])
     },
 
     getOptionsForPiece: function(playerId, pieceType, x, y) {
         // Gets available moves for a piece
-        moves = []
+        var moves = []
 
         if (pieceType == 1) {
             // Pawn
-            offsets = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+            var offsets = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
             for (var i = 0; i < offsets.length; i++) {
-                offset = offsets[i]
+                var offset = offsets[i]
                 moves.push([x + offset[0], y + offset[1]])
             }
         }
         else if (pieceType == 2) {
             // Drone
-            directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+            var directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 
             for (var i = 0; i < directions.length; i++) {
                 // Start moving in a direction
-                dir = directions[i]
-                cx, cy = x, y
+                var dir = directions[i]
+                var cx = x
+                var cy = y
                 for (var d = 0; d < 2; d++) { // Up to 2 spaces away
                     cx = cx + dir[0]
                     cy = cy + dir[1]
-                    if (self.getSpace(cx, cy) < 0) {
+                    if (this.getSpace(cx, cy) < 0) {
                         break // Out of bounds, stop now
                     }
-                    moves.append((cx, cy)) // Add this move as potentially available
-                    if (self.getSpace(cx, cy) > 0) {
+                    moves.push((cx, cy)) // Add this move as potentially available
+                    if (this.getSpace(cx, cy) > 0) {
                         // There's a piece here so let's not go any further
                         break
                     }
@@ -193,20 +205,20 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
         else if (pieceType == 2) {
             // Queen
-            directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [-1, -1], [-1, 1], [1, -1], [1, 1]]
+            var directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [-1, -1], [-1, 1], [1, -1], [1, 1]]
 
             for (var i = 0; i < directions.length; i++) {
                 // Start moving in a direction
-                dir = directions[i]
-                cx, cy = x, y
+                var dir = directions[i]
+                var cx, cy = x, y
                 while (true) { // Queen can move as far as they want
                     cx = cx + dir[0]
                     cy = cy + dir[1]
-                    if (self.getSpace(cx, cy) < 0) {
+                    if (this.getSpace(cx, cy) < 0) {
                         break // Out of bounds, stop now
                     }
                     moves.append((cx, cy)) // Add this move as potentially available
-                    if (self.get_space(cx, cy) > 0) {
+                    if (this.get_space(cx, cy) > 0) {
                         // There's a piece here so let's not go any further
                         break
                     }
@@ -215,9 +227,10 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
 
         // Check legality of potential moves
-        options = []
+        var options = []
         for (var i = 0; i < moves.length; i++) { 
-            cx, cy = moves[i][0], moves[i][1]
+            var cx = moves[i][0]
+            var cy = moves[i][1]
 
             // Prevent move rejection (undoing the last player's move)
             if (this.lastMove && this.lastMove[5] == true && this.lastMove[0] == cx && this.lastMove[1] == cy && this.lastMove[2] == x && this.lastMove[3] == y) {
@@ -225,13 +238,13 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             }
 
             // Allow legal moves
-            if (self.get_space(cx, cy) == 0) { // Move to empty space
+            if (this.getSpace(cx, cy) == 0) { // Move to empty space
                 options.push([cx, cy])
             }
-            else if (self.canPlayerTake(playerId, x, y)) { // Take enemy piece
+            else if (this.canPlayerTake(playerId, x, y)) { // Take enemy piece
                 options.push([cx, cy])
             }
-            else if (self.canFieldPromote(playerId, x, y, cx, cy)) {
+            else if (this.canFieldPromote(playerId, x, y, cx, cy)) {
                 options.push([cx, cy])
             }
         }
@@ -243,11 +256,14 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
     getControlledPieces: function(playerId) {
         // Returns a list of pieces that the player has control over in a list formatted as [pieceType, x, y]
         pieces = []
-        control_area = self.getControlArea(playerId)
-        control_x1, control_y1, control_x2, control_y2 = control_area[0],control_area[1],control_area[2],control_area[3]
+        control_area = this.getControlArea(playerId)
+        var control_x1 = control_area[0]
+        var control_y1 = control_area[1]
+        var control_x2 = control_area[2]
+        var control_y2 = control_area[3]
         for (var x = control_x1; x <= control_x2; x++) {
             for (var y = control_y1; y <= control_y2; y++) {
-                piece = self.getSpace(x, y)
+                piece = this.getSpace(x, y)
                 if (piece > 0) {
                     pieces.push([piece, x, y])
                 }
@@ -260,12 +276,12 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     place: function(piece, x, y) {
         // Place a piece at a given position on the board
-        self.board[x][y] = piece
+        this.board[x][y] = piece
     },
 
     getPlayerScore: function(playerId) {
         // Return the individual score of a player
-        if(self.playerId = "Left") {
+        if(this.playerId = "Left") {
             return this.topScore
         }
         else {
@@ -277,8 +293,9 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     makeMove: function(playerId, x, y, toX, toY) {
         // Moves a selected piece to chosen position if possible
-        pieceType = self.getSpace(x, y)
-        options = self.getOptionsForPiece(playerId, pieceType, x, y)
+        console.log("Make move was indeed called: "+ playerId+","+x+","+y+","+toX+","+toY)
+        var pieceType = this.getSpace(x, y)
+        var options = this.getOptionsForPiece(playerId, pieceType, x, y)
 
         if(!(toX, toY) in options) {
             // Illegal move
@@ -286,27 +303,36 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
         
         // Perform Legal moves
-        if(self.getSpace(toX, toY) == 0) {
+        if(this.getSpace(toX, toY) == 0) {
             // Move to an empty space
-            self.place(0, x, y)
-            self.place(pieceType, toX, toY)
+            console.log("We moved to an empty space")
+            this.place(0, x, y)
+            this.place(pieceType, toX, toY)
         }
-        else if(self.canPlayerTake(playerId, toX, toY)) {
+        else if(this.canPlayerTake(playerId, toX, toY)) {
             // Space occupied by enemy piece that will be taken
-            self.getPlayerScore(playerId) += self.getSpace(toX, toY)
-            self.place(0, x, y)
-            self.place(pieceType, toX, toY)
+            console.log("We took an enemy piece")
+            var pointsEarned = this.getSpace(toX, toY)
+            if (playerId == 0) { // Top player
+                this.topScore += pointsEarned
+            }
+            else if (playerId == 1) { // Bottom player
+                this.bottomScore += pointsEarned
+            }
+            this.place(0, x, y)
+            this.place(pieceType, toX, toY)
         }
-        else if(self.canFieldPromote(playerId, x, y, toX, toY)) {
+        else if(this.canFieldPromote(playerId, x, y, toX, toY)) {
             // Give piece a field promotion
-            promoteTo = self.canFieldPromote(playerId, x, y, toX, toY)
-            self.place(0, x, y)
-            self.place(promoteTo, toX, toY)
+            console.log("We did a field promotion")
+            var promoteTo = this.canFieldPromote(playerId, x, y, toX, toY)
+            this.place(0, x, y)
+            this.place(promoteTo, toX, toY)
         }
 
         // Update the last move
-        crossesCanal = !self.checkSpaceOwnership(playerId, toX, toY)
-        self.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal} // Dont know if this is how this works in JavaScript
+        var crossesCanal = !this.checkSpaceOwnership(playerId, toX, toY)
+        this.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal} // Dont know if this is how this works in JavaScript
         return true
     },
 });
@@ -349,7 +375,6 @@ function newMartianChessGame() {
     const players = [leftPlayer, rightPlayer];
     var game = new MartianChess();
     var ref = new Referee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
-    
 }
 
 const MartianChessView = Class.create({
@@ -359,72 +384,115 @@ const MartianChessView = Class.create({
     },
 
     draw(containerElement, listener) {
-        //clear out the children of containerElement
+        // Clear out the children of containerElement
         while (containerElement.hasChildNodes()) {
             containerElement.removeChild(containerElement.firstChild);
         }
         var svgNS = "http://www.w3.org/2000/svg";
         var boardSvg = document.createElementNS(svgNS, "svg");
-        //now add the new board to the container
+        // Now add the new board to the container
         containerElement.appendChild(boardSvg);
-        boardSvg.setAttributeNS(null, "width", 10 + this.position.height * 100);
-        boardSvg.setAttributeNS(null, "height", 10 + this.position.width * 100);
+        boardSvg.setAttributeNS(null, "width", 10 + this.position.width * 100);
+        boardSvg.setAttributeNS(null, "height", 10 + this.position.height * 100);
 
-        //draw the checker tiles
-        for (var i = 0; i < this.position.height; i++) {
-            for (var j = 0; j < this.position.width; j++) {
-                var parityString = "even";
+        // Draw the Martian Chess board
+        for (var i = 0; i < this.position.width; i++) {
+            for (var j = 0; j < this.position.height; j++) {
+                // Draw the tile
+                var parityString = "Even";
                 if ((i+j) % 2 == 1) {
-                    parityString = "odd";
+                    parityString = "Odd";
                 }
                 var checkerTile = document.createElementNS(svgNS,"rect");
                 checkerTile.setAttributeNS(null, "x", (i * 100) + "");
                 checkerTile.setAttributeNS(null, "y", (j * 100) + "");
                 checkerTile.setAttributeNS(null, "height", "100");
                 checkerTile.setAttributeNS(null, "width", "100");
-                checkerTile.setAttributeNS(null, "class", parityString + "Checker");
+                checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
                 boardSvg.appendChild(checkerTile);
                 if (listener != undefined) {
                     var player = listener;
                     checkerTile.onclick = function(event) {player.handleClick(event);}
                 }
-
             }
         }
+
+        // Draw the dividing line
+        var dividingLine = document.createElementNS(svgNS,"rect");
+        dividingLine.setAttributeNS(null, "x", "0");
+        dividingLine.setAttributeNS(null, "y", ((this.position.height/2) * 100) - 4 + "");
+        dividingLine.setAttributeNS(null, "height", "8");
+        dividingLine.setAttributeNS(null, "width", new String(this.position.width * 100));
+        dividingLine.setAttributeNS(null, "class", "martianChessDivide");
+        boardSvg.appendChild(dividingLine);
 
         // Draw pieces (TODO: Rework this to draw the martian chess pieces)
-        for (var playerId = 0; playerId < 2; playerId++) {
-            for (var i =0; i < this.position.dominoes[playerId].length; i++) {
-                var domino = this.position.dominoes[playerId][i];
-                var column = domino[0];
-                var row = domino[1];
-                var dominoRect = document.createElementNS(svgNS, "rect");
-                dominoRect.setAttributeNS(null, "x", new String(10 + column * 100));
-                dominoRect.setAttributeNS(null, "y", new String(10 + row * 100));
-                //these two lines round the corners
-                dominoRect.setAttributeNS(null, "rx", "10");
-                dominoRect.setAttributeNS(null, "ry", "10");
-                dominoRect.setAttributeNS(null, "width", new String(100 * (1 + playerId) - 20));
-                dominoRect.setAttributeNS(null, "height", new String(100 * (2 - playerId) - 20));
-                dominoRect.setAttributeNS(null, "class", "domino");
-                boardSvg.appendChild(dominoRect);
+        for (var i = 0; i < this.position.width; i++) {
+            for (var j = 0; j < this.position.height; j++) {
+                // Draw the piece if it exists
+                piece = this.position.getSpace(i,j)
+                if (piece > 0) {
+                    // Determine size
+                    var size = 0
+                    if (piece == 1) {
+                        size = 30 // Pawn
+                    }
+                    else if (piece == 2) {
+                        size = 55 // Drone
+                    }
+                    else if (piece == 3) {
+                        size = 80 // Queen
+                    }
+
+                    // Draw piece
+                    var checkerTile = document.createElementNS(svgNS,"rect");
+                    checkerTile.setAttributeNS(null, "x", (i * 100) + ((100-size)/2) + "");
+                    checkerTile.setAttributeNS(null, "y", (j * 100) + ((100-size)/2) + "");
+                    checkerTile.setAttributeNS(null, "height", new String(size));
+                    checkerTile.setAttributeNS(null, "width", new String(size));
+                    checkerTile.setAttributeNS(null, "class", "martianChessPiece");
+                    boardSvg.appendChild(checkerTile);
+                    if (listener != undefined) {
+                        var player = listener;
+                        checkerTile.onclick = function(event) {player.handleClick(event);}
+                    }
+                }
             }
         }
 
-        //draw the blocked spaces
-        for (var i = 0; i < this.position.blockedSpaces.length; i++) {
-            // console.log("Adding the block: " + this.position.blockedSpaces[i]);
-            var block = this.position.blockedSpaces[i];
-            var column = block[0];
-            var row = block[1];
-            var blockRect = document.createElementNS(svgNS, "rect");
-            blockRect.setAttributeNS(null, "x", new String(5 + column * 100));
-            blockRect.setAttributeNS(null, "y", new String(5 + row * 100));
-            blockRect.setAttributeNS(null, "width", "90");
-            blockRect.setAttributeNS(null, "height", "90");
-            blockRect.setAttributeNS(null, "class", "domino");
-            boardSvg.appendChild(blockRect);
-        }
+
+        // for (var playerId = 0; playerId < 2; playerId++) {
+        //     for (var i =0; i < this.position.dominoes[playerId].length; i++) {
+        //         var domino = this.position.dominoes[playerId][i];
+        //         var column = domino[0];
+        //         var row = domino[1];
+        //         var dominoRect = document.createElementNS(svgNS, "rect");
+        //         dominoRect.setAttributeNS(null, "x", new String(10 + column * 100));
+        //         dominoRect.setAttributeNS(null, "y", new String(10 + row * 100));
+        //         //these two lines round the corners
+        //         dominoRect.setAttributeNS(null, "rx", "10");
+        //         dominoRect.setAttributeNS(null, "ry", "10");
+        //         dominoRect.setAttributeNS(null, "width", new String(100 * (1 + playerId) - 20));
+        //         dominoRect.setAttributeNS(null, "height", new String(100 * (2 - playerId) - 20));
+        //         dominoRect.setAttributeNS(null, "class", "domino");
+        //         boardSvg.appendChild(dominoRect);
+        //     }
+        // }
+
+        // // Draw the blocked spaces
+        // for (var i = 0; i < this.position.blockedSpaces.length; i++) {
+        //     // console.log("Adding the block: " + this.position.blockedSpaces[i]);
+        //     var block = this.position.blockedSpaces[i];
+        //     var column = block[0];
+        //     var row = block[1];
+        //     var blockRect = document.createElementNS(svgNS, "rect");
+        //     blockRect.setAttributeNS(null, "x", new String(5 + column * 100));
+        //     blockRect.setAttributeNS(null, "y", new String(5 + row * 100));
+        //     blockRect.setAttributeNS(null, "width", "90");
+        //     blockRect.setAttributeNS(null, "height", "90");
+        //     blockRect.setAttributeNS(null, "class", "domino");
+        //     boardSvg.appendChild(blockRect);
+        // }
     },
 
     redraw(boardState) { // gets rid of board contents -cam

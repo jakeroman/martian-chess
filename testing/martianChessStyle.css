@@ -1,0 +1,20 @@
+.martianChessDivide {
+    fill: rgb(255, 0, 0);
+    stroke: Black;
+    stroke-width: 0;
+}
+rect.martianChessEvenTile {
+	fill:#282828;
+	stroke:Black;
+	stroke-width:4;
+}
+rect.martianChessOddTile {
+	fill:#5B5B5B;
+	stroke-width:4;
+	stroke:Black;
+}
+.martianChessPiece {
+    fill: rgb(190, 20, 20);
+    stroke: Black;
+    stroke-width: 4;
+}
