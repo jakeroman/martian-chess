@@ -83,19 +83,19 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
     
     getOptionsForPlayer: function(playerId) {
         // Returns a list of all moves a player can currently make in format [x, y, toX, toY]
-        playerPieces = this.getControlledPieces(playerId)
+        var playerPieces = this.getControlledPieces(playerId)
         var options = []
         for (var pieceId = 0; pieceId < playerPieces.length; pieceId++) {
             var pieceType = playerPieces[pieceId][0]
             var x = playerPieces[pieceId][1] 
             var y = playerPieces[pieceId][2]
-            pieceOptions = this.getOptionsForPiece(playerId, pieceType, x, y)
+            var pieceOptions = this.getOptionsForPiece(playerId, pieceType, x, y)
             var numOptions = pieceOptions.length
             for (var optionId = 0; optionId < numOptions; optionId++) {
-                pieceOption = pieceOptions[optionId]
+                var pieceOption = pieceOptions[optionId]
 
                 // Clone the board and make the move
-                option = this.clone()
+                var option = this.clone()
                 console.log(pieceOption)
                 option.makeMove(playerId, x, y, pieceOption[0], pieceOption[1])
                 options.push(option)
@@ -150,8 +150,8 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             return false // If player doesn't own both pieces field promotion cannot continue
         }
 
-        pieceA = this.getSpace(piece_x, piece_y)
-        pieceB = this.getSpace(to_x, to_y)
+        var pieceA = this.getSpace(piece_x, piece_y)
+        var pieceB = this.getSpace(to_x, to_y)
         if ((pieceA == 1 && pieceB == 2) || (pieceA == 2 && pieceB == 1)) {
             // Field promotion to queen possible
             return 3
@@ -255,15 +255,15 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     getControlledPieces: function(playerId) {
         // Returns a list of pieces that the player has control over in a list formatted as [pieceType, x, y]
-        pieces = []
-        control_area = this.getControlArea(playerId)
+        var pieces = []
+        var control_area = this.getControlArea(playerId)
         var control_x1 = control_area[0]
         var control_y1 = control_area[1]
         var control_x2 = control_area[2]
         var control_y2 = control_area[3]
         for (var x = control_x1; x <= control_x2; x++) {
             for (var y = control_y1; y <= control_y2; y++) {
-                piece = this.getSpace(x, y)
+                var piece = this.getSpace(x, y)
                 if (piece > 0) {
                     pieces.push([piece, x, y])
                 }
