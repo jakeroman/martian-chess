@@ -405,10 +405,15 @@ const MartianChessView = Class.create({
         }
         var svgNS = "http://www.w3.org/2000/svg";
         var boardSvg = document.createElementNS(svgNS, "svg");
+
+        // Calculate board scale
+        var boardWidth = Math.min(getAvailableHorizontalPixels(containerElement), window.innerWidth - 200);
+        var boardPixelSize = Math.min(window.innerHeight, boardWidth) / 10;
+
         // Now add the new board to the container
         containerElement.appendChild(boardSvg);
-        boardSvg.setAttributeNS(null, "width", 10 + this.position.width * 100);
-        boardSvg.setAttributeNS(null, "height", 10 + this.position.height * 100);
+        boardSvg.setAttributeNS(null, "width", 10 + (this.position.width + 4) * boardPixelSize);
+        boardSvg.setAttributeNS(null, "height", 10 + this.position.height * boardPixelSize);
 
         // Draw the Martian Chess board
         for (var i = 0; i < this.position.width; i++) {
@@ -419,10 +424,12 @@ const MartianChessView = Class.create({
                     parityString = "Odd";
                 }
                 var checkerTile = document.createElementNS(svgNS,"rect");
-                checkerTile.setAttributeNS(null, "x", (i * 100) + "");
-                checkerTile.setAttributeNS(null, "y", (j * 100) + "");
-                checkerTile.setAttributeNS(null, "height", "100");
-                checkerTile.setAttributeNS(null, "width", "100");
+                checkerTile.setAttributeNS(null, "x", (i * boardPixelSize) + "");
+                checkerTile.setAttributeNS(null, "y", (j * boardPixelSize) + "");
+                checkerTile.setAttributeNS(null, "posX", i + "");
+                checkerTile.setAttributeNS(null, "posY", j + "");
+                checkerTile.setAttributeNS(null, "height", boardPixelSize + "");
+                checkerTile.setAttributeNS(null, "width", boardPixelSize + "");
                 checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
                 boardSvg.appendChild(checkerTile);
                 if (listener != undefined) {
@@ -435,9 +442,9 @@ const MartianChessView = Class.create({
         // Draw the dividing line
         var dividingLine = document.createElementNS(svgNS,"rect");
         dividingLine.setAttributeNS(null, "x", "0");
-        dividingLine.setAttributeNS(null, "y", ((this.position.height/2) * 100) - 4 + "");
+        dividingLine.setAttributeNS(null, "y", ((this.position.height/2) * boardPixelSize) - 4 + "");
         dividingLine.setAttributeNS(null, "height", "8");
-        dividingLine.setAttributeNS(null, "width", new String(this.position.width * 100));
+        dividingLine.setAttributeNS(null, "width", new String(this.position.width * boardPixelSize));
         dividingLine.setAttributeNS(null, "class", "martianChessDivide");
         boardSvg.appendChild(dividingLine);
 
@@ -448,23 +455,25 @@ const MartianChessView = Class.create({
                 piece = this.position.getSpace(i,j)
                 if (piece > 0) {
                     // Determine size
-                    var size = 0
+                    var pieceSize = 0
                     if (piece == 1) {
-                        size = 30 // Pawn
+                        pieceSize = .30 * boardPixelSize // Pawn
                     }
                     else if (piece == 2) {
-                        size = 55 // Drone
+                        pieceSize = .55 * boardPixelSize // Drone
                     }
                     else if (piece == 3) {
-                        size = 80 // Queen
+                        pieceSize = .80 * boardPixelSize // Queen
                     }
 
                     // Draw piece
                     var checkerTile = document.createElementNS(svgNS,"rect");
-                    checkerTile.setAttributeNS(null, "x", (i * 100) + ((100-size)/2) + "");
-                    checkerTile.setAttributeNS(null, "y", (j * 100) + ((100-size)/2) + "");
-                    checkerTile.setAttributeNS(null, "height", new String(size));
-                    checkerTile.setAttributeNS(null, "width", new String(size));
+                    checkerTile.setAttributeNS(null, "x", (i * boardPixelSize) + ((boardPixelSize-pieceSize)/2) + "");
+                    checkerTile.setAttributeNS(null, "y", (j * boardPixelSize) + ((boardPixelSize-pieceSize)/2) + "");
+                    checkerTile.setAttributeNS(null, "posX", i + "");
+                    checkerTile.setAttributeNS(null, "posY", j + "");
+                    checkerTile.setAttributeNS(null, "height", new String(pieceSize));
+                    checkerTile.setAttributeNS(null, "width", new String(pieceSize));
                     checkerTile.setAttributeNS(null, "class", "martianChessPiece");
                     boardSvg.appendChild(checkerTile);
                     if (listener != undefined) {
@@ -474,6 +483,26 @@ const MartianChessView = Class.create({
                 }
             }
         }
+
+        // Display top score
+        var topScoreDisplay = document.createElementNS(svgNS, "text");
+        topScoreDisplay.textContent = "TOP SCORE: " + this.position.topScore;
+        topScoreDisplay.setAttributeNS(null, "x", boardPixelSize*0.1 + this.position.width * boardPixelSize + boardPixelSize*0.1);
+        topScoreDisplay.setAttributeNS(null, "y", boardPixelSize*0.4); // Set the y position, adjust as needed
+        topScoreDisplay.setAttributeNS(null, "font-size", boardPixelSize*0.4);
+        topScoreDisplay.setAttributeNS(null, "fill", "black");
+        topScoreDisplay.setAttributeNS(null, "overflow", "visible");
+        boardSvg.appendChild(topScoreDisplay);
+
+        // Display bottom score
+        var bottomScoreDisplay = document.createElementNS(svgNS, "text");
+        bottomScoreDisplay.textContent = "BOTTOM SCORE: " + this.position.bottomScore;
+        bottomScoreDisplay.setAttributeNS(null, "x", boardPixelSize*0.1 + this.position.width * boardPixelSize + boardPixelSize*.2);
+        bottomScoreDisplay.setAttributeNS(null, "y", this.position.height * boardPixelSize); // Set the y position, adjust as needed
+        bottomScoreDisplay.setAttributeNS(null, "font-size", boardPixelSize*0.4);
+        bottomScoreDisplay.setAttributeNS(null, "fill", "black");
+        bottomScoreDisplay.setAttributeNS(null, "overflow", "visible");
+        boardSvg.appendChild(bottomScoreDisplay);
     },
 
     redraw(boardState) { // gets rid of board contents -cam
