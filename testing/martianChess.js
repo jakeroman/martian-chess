@@ -542,6 +542,8 @@ const MartianChessView = Class.create({
     }
 });
 
+// Beginning of Interactivity
+
 function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, containerElement) {
     var clickedTile = event.target.box;
     // Determine the piece the player wants to move
