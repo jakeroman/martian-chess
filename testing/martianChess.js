@@ -159,6 +159,10 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             // Field promotion to drone possible
             return 2
         }
+        else {
+            // Field promotion not possible
+            return false
+        }
     },
 
     checkSpaceOwnership: function(playerId, x, y) {
@@ -342,7 +346,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
 
         // Update the last move
-        var crossesCanal = this.checkSpaceOwnership(playerId, toX, toY)
+        var crossesCanal = !this.checkSpaceOwnership(playerId, toX, toY)
         this.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal} // Dont know if this is how this works in JavaScript
         return true
     },
@@ -385,7 +389,7 @@ function newMartianChessGame() {
     var rightPlayer =  eval(getSelectedRadioValue(controlForm.elements['rightPlayer']));
     const players = [leftPlayer, rightPlayer];
     var game = new MartianChess();
-    var ref = new Referee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
+    var ref = new ScoringReferee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
 }
 
 const MartianChessView = Class.create({
