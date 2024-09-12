@@ -332,7 +332,6 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
         else if (this.canPlayerTake(playerId, toX, toY)) {
             // Space occupied by enemy piece that will be taken
-            console.log("Take enemy piece?")
             var pointsEarned = this.getSpace(toX, toY)
             if (playerId == 0) { // Top player
                 this.topScore += pointsEarned
@@ -340,9 +339,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             else if (playerId == 1) { // Bottom player
                 this.bottomScore += pointsEarned
             }
-            console.log("Delete old piece")
             this.place(0, x, y)
-            console.log("Overwrite ",toX,toY,"with",pieceType)
             this.place(pieceType, toX, toY)
         }
         else if (this.canFieldPromote(playerId, x, y, toX, toY)) {
