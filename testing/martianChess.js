@@ -29,7 +29,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
 
     getScore: function() {
         // Top player is the left, and bottom player is the right on the number line
-        return this.bottomScore - this.topScore
+        return this.topScore - this.bottomScore
     },
 
     clone: function() {
@@ -82,6 +82,13 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
     },
     
     getOptionsForPlayer: function(playerId) {
+        // First check if the game is over
+        var enemyPieces = this.getControlledPieces(1-playerId)
+        if (enemyPieces.length == 0) {
+            // The game is already over
+            return []
+        }
+
         // Returns a list of all moves a player can currently make in format [x, y, toX, toY]
         var playerPieces = this.getControlledPieces(playerId)
         var options = []
@@ -387,6 +394,8 @@ function newMartianChessGame() {
     var controlForm = $('gameOptions');
     var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
     var rightPlayer =  eval(getSelectedRadioValue(controlForm.elements['rightPlayer']));
+    leftPlayer.delayMilliseconds = 10
+    rightPlayer.delayMilliseconds = 10
     const players = [leftPlayer, rightPlayer];
     var game = new MartianChess();
     var ref = new ScoringReferee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);

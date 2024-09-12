@@ -847,7 +847,7 @@ const InteractiveAmazonsView = Class.create({
                 }
                 if (content.includes("amazon")) {
                     text = "A";
-                    //text = "ï¿¼ï¿¼ï¿¼ðŸ"; //this is a green snake
+                    //text = "￼￼￼🐍"; //this is a green snake
                 }
                 const textColor = (content.includes("blue")) ? "blue" : "red";
                 
@@ -1544,7 +1544,7 @@ function newAtroposGame() {
  * Grid is stored as a 2D array of booleans.
  * @author Kyle Burke
  */
-var BinaryGeography = Class.create(CombinatorialGame, {
+const BinaryGeography = Class.create(CombinatorialGame, {
    
     /**
      * Constructor.
@@ -1556,16 +1556,16 @@ var BinaryGeography = Class.create(CombinatorialGame, {
         this.WHITE = -1;
         this.playerNames = ["Left", "Right"];
         if (blackStartColumn == null) {
-            blackStartColumn = Math.floor(Math.random() * height);
+            blackStartColumn = Math.floor(Math.random() * width);
         }
         if (blackStartRow == null) {
-            blackStartRow = Math.floor(Math.random() * width);
+            blackStartRow = Math.floor(Math.random() * height);
         }
         if (whiteStartColumn == null) {
-            whiteStartColumn = Math.floor(Math.random() * height);
+            whiteStartColumn = Math.floor(Math.random() * width);
         }
         if (whiteStartRow == null) {
-            whiteStartRow = Math.floor(Math.random() * width);
+            whiteStartRow = Math.floor(Math.random() * height);
         } 
         while (whiteStartColumn == blackStartColumn && whiteStartRow == blackStartRow) {
             whiteStartColumn = Math.floor(Math.random() * height);
@@ -1613,15 +1613,30 @@ var BinaryGeography = Class.create(CombinatorialGame, {
     ,equals: function(other) {
         //check that the dimensions match
         if (this.getWidth() != other.getWidth() || this.getHeight() != other.getHeight()) {
+            console.log("failed dimensions");
             return false;
         }
         //now check that all the cells are equal
         for (var col = 0; col < this.columns.length; col++) {
             for (var row = 0; row < this.columns[col].length; row++) {
                 if (this.columns[col][row] != other.columns[col][row]) {
+                    console.log("Not equal because of space col = " + col + "  row = " + row);
                     return false;
                 }
             }
+        }
+        if (this.lastBlackColumn != other.lastBlackColumn) {
+            console.log("failed black column");
+            return false;
+        } else if (this.lastBlackRow != other.lastBlackRow) {
+            console.log("failed black row");
+            return false;
+        } else if (this.lastWhiteColumn != other.lastWhiteColumn) {
+            console.log("failed white column");
+            return false;
+        } else if (this.lastWhiteRow != other.lastWhiteRow) {
+            console.log("failed white row");
+            return false;
         }
         return true;
     }
@@ -1686,6 +1701,7 @@ var BinaryGeography = Class.create(CombinatorialGame, {
             option.lastWhiteColumn = column;
             option.lastWhiteRow = row;
         }
+        x = option;
         return option;
     }
     
@@ -8540,7 +8556,7 @@ const InteractiveGorgonsView = Class.create({
                 }
                 if (content.includes("gorgon")) {
                     text = "G";
-                    //text = "ï¿¼ï¿¼ï¿¼ðŸ"; //this is a green snake
+                    //text = "￼￼￼🐍"; //this is a green snake
                 }
                 const textColor = (content.includes("blue")) ? "blue" : "red";
                 
@@ -8880,7 +8896,7 @@ const NonInteractiveGorgonsView = Class.create({
                 }
                 if (content.includes("gorgon")) {
                     text = "G";
-                    //text = "ï¿¼ï¿¼ï¿¼ðŸ"; //this is a green snake
+                    //text = "￼￼￼🐍"; //this is a green snake
                 }
                 const textColor = (content.includes("blue")) ? "blue" : "red";
                 
@@ -10934,14 +10950,33 @@ function getRandomPaintCanGame(numPiles, minPileSize, maxPileSize) {
         const pile = [];
         const numBricks = minPileSize + Math.floor(Math.random() * (maxPileSize + 1 - minPileSize));
         //we don't want the bottom brick to be gray, otherwise it's just equal to zero.
-        pile.push(randomChoice(["blue", "red", "green"]));
+        const firstBrick = randomChoice(["blue", "red", "green"]);
+        pile.push(firstBrick);
         //push on all the remaining bricks (aside from the top.
         for (var j = 1; j < numBricks-1; j++) {
             pile.push(randomChoice(colors));
         }
-        //now add a top brick.  Again, not Gray.
+        //now add a top brick.  Again, not Gray.  Also, we want to make sure both players can play on each stack.
         if (numBricks > 1) {
-            pile.push(randomChoice(["blue", "red", "green"]));
+            var blueCanPlay = false;
+            var redCanPlay = false;
+            for (var j = 0; j < numBricks - 1; j++) {
+                const brick = pile[j];
+                if (brick == "blue" || brick == "green") {
+                    blueCanPlay = true;
+                } 
+                if (brick == "red" || brick == "green") {
+                    redCanPlay = true;
+                }
+            }
+            if (blueCanPlay && redCanPlay) {
+                pile.push(randomChoice(["blue", "red", "green"]));
+            } else if (blueCanPlay && !redCanPlay) {
+                pile.push(randomChoice(["green", "red"]));
+            } else {
+                //red can play, but blue cannot
+                pile.push(randomChoice(["green", "blue"]));
+            }
         }
         piles.push(pile);
     }
@@ -12482,11 +12517,13 @@ const Referee = Class.create({
             }
             //this.requestNextMove();
         } else {
-            console.log("The current player tried to make an illegal move!");
+            console.log("The current player (" + this.currentPlayer + ") tried to make an illegal move!");
             if (option != null) {
                 console.log("Tried to move to a non-option!  Parent stored in debugPar; bad option stored in debugVar.");
-                console.log("  From: " + this.position);
-                console.log("  To: " + option);
+                console.log("  From (debugPar): " + this.position);
+                console.log(this.position);
+                console.log("  To (debugVar): " + option);
+                console.log(option);
                 debugVar = option;
                 debugPar = this.position;
             }
@@ -12585,10 +12622,10 @@ const ScoringReferee = Class.create(Referee, {
     }
     
     ,getGameScore: function() {
-        if (Object.hasOwn(this.position, "getScore")) {
+        try {
             return this.position.getScore();
-        } else {
-            //the user really shouldn't be 
+        } catch (error) {
+            console.error(error);
             return 0;
         }
     }
@@ -13950,3 +13987,4 @@ const TriangularGridGraph = Class.create({
     }
     
 });
+
