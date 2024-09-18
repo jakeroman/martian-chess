@@ -42,6 +42,6 @@ class NeuralPlayerUtils:
     @staticmethod
     def generate_move_mask(move_space, options):
         """Creates a mask of 1s and 0s representing which moves in the move space are legal options at this time"""
-        move_space_set = set(move_space) # Convert move space to a set for faster access
-        mask = [1 if move in options else 0 for move in move_space_set]
+        options_set = set(options) # Convert options to a set for faster access
+        mask = [1 if move in options_set else 0 for move in move_space]
         return np.array(mask)
