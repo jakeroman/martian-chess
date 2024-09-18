@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 tensorflow = "*"
+torch = "*"
 
 [dev-packages]
 
