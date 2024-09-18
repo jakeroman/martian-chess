@@ -624,6 +624,13 @@ function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, contain
     }
 }
 
+function handleClick() {
+    this.handleClick = function(event) {
+        var nextPosition = this.view.getNextPositionFromClick(event)
+        console.log(this.view)
+    }
+}
+
 const MartianChessViewFactory = Class.create({ // MartianChess ViewFactory
 
     initialize: function() {
