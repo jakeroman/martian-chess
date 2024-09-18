@@ -25,7 +25,7 @@ class MartianChessReferee:
             self.view.redraw(self.game.board) # Update view
 
             # Get options for player
-            player_object = self.bottom_player if self.active_player_id == PlayerID.BOTTOM else self.top_player
+            player_object = self._get_player_object(self.active_player_id)
             options = self.game.get_player_options(self.active_player_id)
 
             # Ask player to make move
@@ -50,8 +50,11 @@ class MartianChessReferee:
             # Switch players
             self.active_player_id = self._get_other_player(self.active_player_id)
 
-        # Game loop complete!
+        # Inform players of their result and final score
         print(f"{winner.upper()} Player was victorious!")
+        loser = self._get_other_player(winner)
+        self._get_player_object(winner).game_over(True, self._get_player_score(winner))
+        self._get_player_object(loser).game_over(False, self._get_player_score(loser))
         return winner
 
 
@@ -61,3 +64,11 @@ class MartianChessReferee:
             return PlayerID.TOP
         else:
             return PlayerID.BOTTOM
+
+    def _get_player_object(self, player_id):
+        """Returns the player object associated with this player ID"""
+        return self.bottom_player if player_id == PlayerID.BOTTOM else self.top_player
+    
+    def _get_player_score(self, player_id):
+        """Returns the score of the player with a given ID"""
+        return self.game.points[player_id]
