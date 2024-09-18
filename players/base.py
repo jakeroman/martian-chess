@@ -4,8 +4,8 @@ class BasePlayer:
         """This is called once when the object is created for initialization purposes."""
         pass
 
-    def make_move(self, board, options, player):
-        """The heart of any player, this will be called with the current board state, list of legal moves that the player can make, and your player ID. 
+    def make_move(self, board, options, player, score):
+        """The heart of any player, this will be called with the current board state, list of legal moves that the player can make, your player ID, and current score. 
         Return the options list index of the move you would like to make and the game will do it."""
         pass
 
