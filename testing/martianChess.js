@@ -386,7 +386,7 @@ function createBasicGridGameOptionsForMartianChess() {
  * The start game function which fires up a new round of Martian Chess.
  */
 function newMartianChessGame() {
-    var viewFactory = new MartianChessViewFactory();
+    var viewFactory = new InteractiveMartianChessViewFactory();
     var playDelay = 1000;
     var controlForm = $('gameOptions');
     var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
@@ -398,7 +398,7 @@ function newMartianChessGame() {
     var ref = new ScoringReferee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
 }
 
-const MartianChessView = Class.create({
+const InteractiveMartianChessView = Class.create({
     initialize: function(position) {
         this.position = position;
         this.selectedTile = undefined;
@@ -436,15 +436,15 @@ const MartianChessView = Class.create({
                 var checkerTile = document.createElementNS(svgNS,"rect");
                 checkerTile.setAttributeNS(null, "x", (i * boardPixelSize) + "");
                 checkerTile.setAttributeNS(null, "y", (j * boardPixelSize) + "");
-                checkerTile.setAttributeNS(null, "posX", i + "");
-                checkerTile.setAttributeNS(null, "posY", j + "");
+                checkerTile.setAttributeNS(null, "posX", new String(i));
+                checkerTile.setAttributeNS(null, "posY", new String(j));
                 checkerTile.setAttributeNS(null, "height", boardPixelSize + "");
                 checkerTile.setAttributeNS(null, "width", boardPixelSize + "");
                 checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
                 boardSvg.appendChild(checkerTile);
                 if (listener != undefined) {
                     var player = listener;
-                    checkerTile.onclick = function(event) {player.handleClick(event, currentPlayerX, currentPlayerY, containerElement);}
+                    checkerTile.onclick = function(event) {player.handleClick(event);}
                 }
             }
         }
@@ -458,7 +458,7 @@ const MartianChessView = Class.create({
         dividingLine.setAttributeNS(null, "class", "martianChessDivide");
         boardSvg.appendChild(dividingLine);
 
-        // Draw pieces (TODO: Rework this to draw the martian chess pieces)
+        // Draw pieces
         for (var i = 0; i < this.position.width; i++) {
             for (var j = 0; j < this.position.height; j++) {
                 // Draw the piece if it exists
@@ -477,18 +477,18 @@ const MartianChessView = Class.create({
                     }
 
                     // Draw piece
-                    var checkerTile = document.createElementNS(svgNS,"rect");
-                    checkerTile.setAttributeNS(null, "x", (i * boardPixelSize) + ((boardPixelSize-pieceSize)/2) + "");
-                    checkerTile.setAttributeNS(null, "y", (j * boardPixelSize) + ((boardPixelSize-pieceSize)/2) + "");
-                    checkerTile.setAttributeNS(null, "posX", i + "");
-                    checkerTile.setAttributeNS(null, "posY", j + "");
-                    checkerTile.setAttributeNS(null, "height", new String(pieceSize));
-                    checkerTile.setAttributeNS(null, "width", new String(pieceSize));
-                    checkerTile.setAttributeNS(null, "class", "martianChessPiece");
-                    boardSvg.appendChild(checkerTile);
+                    var pieceTile = document.createElementNS(svgNS,"rect");
+                    pieceTile.setAttributeNS(null, "x", (i * boardPixelSize) + ((boardPixelSize-pieceSize)/2) + "");
+                    pieceTile.setAttributeNS(null, "y", (j * boardPixelSize) + ((boardPixelSize-pieceSize)/2) + "");
+                    pieceTile.setAttributeNS(null, "height", new String(pieceSize));
+                    pieceTile.setAttributeNS(null, "width", new String(pieceSize));
+                    pieceTile.setAttributeNS(null, "posX", new String(i));
+                    pieceTile.setAttributeNS(null, "posY", new String(j));
+                    pieceTile.setAttributeNS(null, "class", "martianChessPiece");
+                    boardSvg.appendChild(pieceTile);
                     if (listener != undefined) {
                         var player = listener;
-                        checkerTile.onclick = function(event) {player.handleClick(event, currentPlayerX, currentPlayerY, containerElement);}
+                        pieceTile.onclick = function(event) {player.handleClick(event);}
                     }
                 }
             }
@@ -543,121 +543,88 @@ const MartianChessView = Class.create({
             }
     
         }
+    },
+
+    // Beginning of Interactivity
+
+    getNextPositionFromClick: function(event, playerIndex) {
+        var clickedTile = event.target;
+        var clickX = Number(clickedTile.getAttribute('posX'));
+        var clickY = Number(clickedTile.getAttribute('posY'));
+    
+        // this.containerElement.addEventListener('click', this.handleClick.bind(this)); // event handler logic
+    
+        // Determine the piece the player wants to move
+        if (this.selectedTile === undefined) {
+            console.log("No active tile, selecting ",clickX,clickY)
+
+            this.selectTile(clickedTile);
+            return null;
+        }
+        // Determine which tile the piece should capture 
+        else {
+            console.log("Yes active tile!", this.selectedTile)
+            var selectedX = Number(this.selectedTile.getAttribute('posX'));
+            var selectedY = Number(this.selectedTile.getAttribute('posY'));
+    
+            // Deselect tile if we clicked on the same one
+            if (selectedX === clickX && selectedY === clickY) {
+                this.deselectMoveTile();
+                return null;
+            }
+
+            this.selectedTile = undefined
+            const clone = this.position.clone();
+            console.log("Requested move from ",selectedX,selectedY,"to",clickX,clickY)
+            success = clone.makeMove(playerIndex,selectedX,selectedY,clickX,clickY)
+            console.log(success)
+            return clone
+            // possibleTiles = this.position.movableTiles(newPieceLoc, board, oldPieceLoc);
+    
+            // for (var i = 0; i < possibleTiles.length; i++) {
+            //     const possibleTile = possibleTiles[i];
+    
+            //     if (this.position.equals(capturedTile, possibleTile)) {
+            //         flag = true;
+            //         break;
+            //     }
+            // }
+    
+            // if (flag) {
+            //     this.selectMoveTile(clickedTile)
+            // }
+        }
+    },
+    
+    selectTile: function(tile) {
+        this.selectedTile = tile;
+        // this.addXs(this.selectedTile.box.column, this.selectedTile.box.row);
+    },
+    
+    deselectTile: function() {
+        this.selectedTile = undefined;
+        // this.removeXs();
+    },
+    
+    selectMoveTile: function(tile) {
+        this.selectedMove = tile;
+        // Apply visual changes to indicate move selection
+    },
+    
+    deselectMoveTile: function() {
+        this.selectedMove = undefined;
     }
+
 });
 
-// Beginning of Interactivity
 
-function selectTile(tile) {
-    this.selectedTile = tile;
-    this.addXs(this.selectedTile.box.column, this.selectedTile.box.row);
-}
-
-function deselectTile() {
-    this.selectedTile = undefined;
-    this.removeXs();
-}
-
-function selectMoveTile(tile) {
-    this.selectedMove = tile;
-    // Apply visual changes to indicate move selection
-}
-
-function deselectMoveTile() {
-    this.selectedMove = undefined;
-}
-
-
-function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, containerElement) {
-    var clickedTile = event.target;
-    var mChessPlayerX = Number(clickedTile.getAttribute('posX'));
-    var mChessPlayerY = Number(clickedTile.getAttribute('posY'));
-    console.log(clickedTile, mChessPlayerX, mChessPlayerY);
-
-    this.containerElement.addEventListener('click', this.handleClick.bind(this)); // event handler logic
-
-    // Determine the piece the player wants to move
-    if (this.selectedTile === undefined) {
-        
-        const text = clickedTile.text;
-        const mChessPlayerX = Number(clickedTile.posX);
-        const mChessPlayerY = Number(clickedTile.posy);
-        if (mChessPlayerX == currentPlayerX && mChessPlayerY == currentPlayerY) {
-            this.selectTile(clickedTile);
-        }
-        return null;
-    }
-    // Determine where the player wants to move the chess piece
-    else if (this.selectedMove === undefined) {
-
-        if (clickedTile == this.selectedTile) {
-            this.deselectTile();
-            return null;
-        }
-        const text = clickedTile.text;
-        const pieceLoc = [this.selectedTile.column, this.selectedTile.row]; // Array from the selected tile's column to the selected tile's row coords
-        const selectedMoveTile = [clickedTile.column, clickedTile.row];
-
-        const board = this.position.getBoard();
-        const possibleMovements = this.position.movableTiles(pieceLoc, board);
-        
-        var flag = false;
-        for(var i = 0; i < possibleMovements.length; i++) {
-            const possibleMove = possibleMovements[i];
-
-            if (this.position.equals(selectedMoveTile, possibleMove)) {
-                flag = true;
-                break;
-            }
-        }
-
-        if (flag) {
-            this.position.movePiece(oldPieceLoc, newPieceLoc);
-            this.deselectTile();
-            this.deselectMoveTile();
-            
-        }
-    }
-    // Determine which tile the piece should capture 
-    else {
-        const text = clickedTile.text;
-        const oldPieceLoc = [this.selectedTile.column, this.selectedTile.row];
-        const newPieceLoc = [this.selectedMove.column, this.selectedMove.row];
-        const capturedTile = [clickedTile.column, clickedTile.row];
-
-        if (clickedTile == this.selectedMove) {
-            this.deselectMoveTile();
-            this.selectTile(this.selectedTile);
-            return null;
-        }
-
-        const board = this.position.getBoard();
-
-        possibleTiles = this.position.movableTiles(newPieceLoc, board, oldPieceLoc);
-
-        for (var i = 0; i < possibleTiles.length; i++) {
-            const possibleTile = possibleTiles[i];
-
-            if (this.position.equals(capturedTile, possibleTile)) {
-                flag = true;
-                break;
-            }
-        }
-
-        if (flag) {
-            this.selectMoveTile(clickedTile)
-        }
-    }
-}
-
-
-const MartianChessViewFactory = Class.create({ // MartianChess ViewFactory
+const InteractiveMartianChessViewFactory = Class.create({ // MartianChess ViewFactory
 
     initialize: function() {
     },
 
     getInteractiveBoard: function(position) {
-        return new MartianChessView(position);
+        return new InteractiveMartianChessView(position);
     },
 
     getView: function(position) {
