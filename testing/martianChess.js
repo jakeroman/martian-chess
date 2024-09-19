@@ -402,6 +402,10 @@ const MartianChessView = Class.create({
     initialize: function(position) {
         this.position = position;
         this.selectedTile = undefined;
+        this.handleClick = function(event, currentPlayerX, currentPlayerY, containerElement) {
+            var nextPosition = this.view.getNextPositionFromClick(event)
+            console.log(this.view)
+        }
     },
 
     draw(containerElement, listener) {
@@ -440,7 +444,7 @@ const MartianChessView = Class.create({
                 boardSvg.appendChild(checkerTile);
                 if (listener != undefined) {
                     var player = listener;
-                    checkerTile.onclick = function(event) {player.handleClick(event);}
+                    checkerTile.onclick = function(event) {player.handleClick(event, currentPlayerX, currentPlayerY, containerElement);}
                 }
             }
         }
@@ -484,7 +488,7 @@ const MartianChessView = Class.create({
                     boardSvg.appendChild(checkerTile);
                     if (listener != undefined) {
                         var player = listener;
-                        checkerTile.onclick = function(event) {player.handleClick(event);}
+                        checkerTile.onclick = function(event) {player.handleClick(event, currentPlayerX, currentPlayerY, containerElement);}
                     }
                 }
             }
@@ -544,8 +548,34 @@ const MartianChessView = Class.create({
 
 // Beginning of Interactivity
 
+function selectTile(tile) {
+    this.selectedTile = tile;
+    this.addXs(this.selectedTile.box.column, this.selectedTile.box.row);
+}
+
+function deselectTile() {
+    this.selectedTile = undefined;
+    this.removeXs();
+}
+
+function selectMoveTile(tile) {
+    this.selectedMove = tile;
+    // Apply visual changes to indicate move selection
+}
+
+function deselectMoveTile() {
+    this.selectedMove = undefined;
+}
+
+
 function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, containerElement) {
-    var clickedTile = event.target.box;
+    var clickedTile = event.target;
+    var mChessPlayerX = Number(clickedTile.getAttribute('posX'));
+    var mChessPlayerY = Number(clickedTile.getAttribute('posY'));
+    console.log(clickedTile, mChessPlayerX, mChessPlayerY);
+
+    this.containerElement.addEventListener('click', this.handleClick.bind(this)); // event handler logic
+
     // Determine the piece the player wants to move
     if (this.selectedTile === undefined) {
         
@@ -559,7 +589,7 @@ function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, contain
     }
     // Determine where the player wants to move the chess piece
     else if (this.selectedMove === undefined) {
-        // Takesies-backsies
+
         if (clickedTile == this.selectedTile) {
             this.deselectTile();
             return null;
@@ -575,14 +605,17 @@ function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, contain
         for(var i = 0; i < possibleMovements.length; i++) {
             const possibleMove = possibleMovements[i];
 
-            if (this.position.coordinatesEquals(selectedMoveTile, possibleMove)) {
+            if (this.position.equals(selectedMoveTile, possibleMove)) {
                 flag = true;
                 break;
             }
         }
 
         if (flag) {
-            this.selectMoveTile(clickedTile);
+            this.position.movePiece(oldPieceLoc, newPieceLoc);
+            this.deselectTile();
+            this.deselectMoveTile();
+            
         }
     }
     // Determine which tile the piece should capture 
@@ -605,31 +638,18 @@ function getNextPositionFromClick(event, currentPlayerX, currentPlayerY, contain
         for (var i = 0; i < possibleTiles.length; i++) {
             const possibleTile = possibleTiles[i];
 
-            if (this.position.coordinatesEquals(capturedTile, possibleTile)) {
+            if (this.position.equals(capturedTile, possibleTile)) {
                 flag = true;
                 break;
             }
         }
 
         if (flag) {
-            const occupiedTile = [this.selectedTile.column, this.selectedTile.row];
-            const moveTile = [this.selectedMove.column, this.selectedMove.row];
-
-            const option = this.position.getOptionFromMove(occupiedTile, moveTile, capturedTile);
-
-            this.deselectTile();
-            this.deselectMoveTile();
-            return option;
+            this.selectMoveTile(clickedTile)
         }
     }
 }
 
-function handleClick() {
-    this.handleClick = function(event) {
-        var nextPosition = this.view.getNextPositionFromClick(event)
-        console.log(this.view)
-    }
-}
 
 const MartianChessViewFactory = Class.create({ // MartianChess ViewFactory
 
