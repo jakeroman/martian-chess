@@ -1,3 +1,4 @@
+from copy import deepcopy
 from game.board import MartianChessBoard
 from game.enum import PlayerID
 from game.view import MartianChessView
@@ -30,7 +31,7 @@ class MartianChessReferee:
 
             # Ask player to make move
             player_move = player_object.make_move(              # Kindly ask the player to make a move
-                self.game.board,                                # Giving them the board state,
+                deepcopy(self.game.board),                      # Giving them the board state,
                 options,                                        # Legal moves list,
                 self.active_player_id,                          # Player ID,
                 self._get_player_score(self.active_player_id)   # And current score.

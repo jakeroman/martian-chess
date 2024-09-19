@@ -1,6 +1,8 @@
+from copy import deepcopy
 import pdb
 
 import numpy as np
+from game.board import MartianChessBoard
 from players.base import BasePlayer
 from players.neuralnet.utils import NeuralPlayerUtils
 import torch
@@ -10,14 +12,25 @@ from scipy.special import softmax
 class NeuralnetPlayer(BasePlayer):
     def __init__(
         self, 
-        board_width: int | None = 4, 
-        board_height: int | None = 8,
-        num_piece_types: int | None = 3,
+        gamma: float = 0.99, 
+        epsilon: float = 1.0, 
+        epsilon_decay: float = 0.995, 
+        epsilon_min: float = 0.01, 
+        learning_rate: float = 0.001,
+        board_width: int = 4, 
+        board_height: int = 8,
+        num_piece_types: int = 3,
     ):
         # Set player parameters
+        self.gamma = gamma
+        # self.epsilon = epsilon
+        # self.epsilon_decay = epsilon_decay
+        # self.epsilon_min = epsilon_min
+        self.learning_rate = learning_rate
+
         self.board_width = board_width
         self.board_height = board_height
-        self.memory = [] # For storing moves during the game to be used for learning later
+        self.game_memory = [] # For storing moves during the game to be used for learning later
 
         # Generate move space
         self.move_space = NeuralPlayerUtils.get_all_possible_moves(board_width, board_height)
@@ -38,7 +51,47 @@ class NeuralnetPlayer(BasePlayer):
 
     def forward(self, flat_board_state):
         # Perform a forward pass through the network
-        return self.network(flat_board_state)
+        board_tensor = torch.FloatTensor(flat_board_state)
+        output_tensor = self.network(board_tensor)
+        decision_array = output_tensor.detach().numpy()  # Move the tensor back to the CPU and convert it to a numpy array
+        return decision_array
+    
+    
+    def learn(self, final_reward):
+        # Learn from the results of a game
+        loss_fn = nn.MSELoss()
+        for id, memory in enumerate(self.game_memory):
+            (state, action, reward, next_state) = memory # Unpack memory
+            
+            # Reward
+            if id == len(self.game_memory) - 1:
+                # For the last memory entry, use the final reward instead
+                reward = final_reward
+
+            # Predict Q values of action taken
+            predicted_q_values = self.forward(state)
+            predicted_q_value = predicted_q_values[action]
+
+            # Compute the target Q-value
+            with torch.no_grad():
+                next_q_values = self.forward(next_state)
+                max_next_q_value = np.max(next_q_values)
+                target_q_value = reward + (self.gamma * max_next_q_value)
+
+            # Calculate loss
+            predicted_value_tensor = torch.tensor([predicted_q_value], dtype=torch.float32, requires_grad=True)
+            target_value_tensor = torch.tensor([target_q_value], dtype=torch.float32, requires_grad=True)
+            loss = loss_fn(predicted_value_tensor, target_value_tensor)
+
+            if id == len(self.game_memory) - 1:
+                print(f"Loss: {loss.item()}")
+
+            # Update network
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+        self.game_memory.clear() # Clear memory to prepare for next game
 
 
     def make_move(self, board, options, player, score):
@@ -46,24 +99,33 @@ class NeuralnetPlayer(BasePlayer):
         one_hot_board = NeuralPlayerUtils.flat_one_hot_encode_board(board) # Use one hot encoding on the board, splitting each piece type into it's own layer
         flat_board = one_hot_board.flatten() # Flatten this new representation of the board for the purpose of feeding into the neural network
 
-        board_tensor = torch.FloatTensor(flat_board)
-        output_tensor = self.forward(board_tensor)
-
-        decision_array = output_tensor.detach().numpy()  # Move the tensor back to the CPU and convert it to a numpy array
+        decision_array = self.forward(flat_board) # Perform a forward pass of the board state through the network
         softmax_decision_array = softmax(decision_array) # Take the softmax of the decision array
 
         # Mask off any illegal moves from the decision array
         move_mask = NeuralPlayerUtils.generate_move_mask(self.move_space, options) # Generate a mask of legal moves (1 = legal, 0 = not legal)
         softmax_decision_array = softmax_decision_array * move_mask # Apply the mask to the decision array by multiplying the two arrays
 
-        # Make the move with the highest confidence value
-        decision_move = self.move_space[np.argmax(softmax_decision_array)]
+        # Choose the move with the highest confidence value
+        decision_move_id = np.argmax(softmax_decision_array)
+        decision_move = self.move_space[decision_move_id]
         decision_option_id = options.index(decision_move)
 
+        # Simulate move on virtual board
+        virtual_board = MartianChessBoard(self.board_width, self.board_height, False)
+        virtual_board.board = deepcopy(board) # Make a copy of our game board and apply that to our virtual board
+        success = virtual_board.make_move(player, decision_move[0], decision_move[1], decision_move[2], decision_move[3])
+        assert success, "Failed to make move on virtual board! Did you rotate the input board without changing the player?"
+
+        # Add information from this move to player memory
+        new_board_state = NeuralPlayerUtils.flat_one_hot_encode_board(virtual_board.board).flatten()
+        self.game_memory.append((flat_board, decision_move_id, score, new_board_state))
+
+        # Finally, make the move
         return decision_option_id
 
 
     def game_over(self, winner, score):
-        """This method will be called at the end of each game, with a boolean representing if you won, and score being a number
-        which indicates the final score of the game, where higher numbers are better."""
-        pass
+        # Update the network with a final reward for this game
+        reward = (50 if winner else -50) + score*2
+        self.learn(reward)
