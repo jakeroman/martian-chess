@@ -2,7 +2,7 @@ from players.base import BasePlayer
 
 
 class HumanPlayer(BasePlayer):
-    def make_move(self, board, options, player):
+    def make_move(self, board, options, player, score):
         print(f"=== HUMAN PLAYER: {player.upper()} ===")
         while True:
             print("What piece would you like to move? ", end="")

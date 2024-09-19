@@ -1,12 +1,12 @@
 from game.enum import PlayerID
 from game.referee import MartianChessReferee
-from players import HumanPlayer, RandomPlayer
+from players import RandomPlayer, NeuralnetPlayer
 
 
-human_player = HumanPlayer()
 random_player = RandomPlayer()
+ai_player = NeuralnetPlayer()
 
-referee = MartianChessReferee(random_player, random_player)
+referee = MartianChessReferee(ai_player, random_player)
 
 top_wins = 0
 bottom_wins = 0

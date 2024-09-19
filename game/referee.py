@@ -29,7 +29,12 @@ class MartianChessReferee:
             options = self.game.get_player_options(self.active_player_id)
 
             # Ask player to make move
-            player_move = player_object.make_move(self.game.board, options, self.active_player_id)
+            player_move = player_object.make_move(              # Kindly ask the player to make a move
+                self.game.board,                                # Giving them the board state,
+                options,                                        # Legal moves list,
+                self.active_player_id,                          # Player ID,
+                self._get_player_score(self.active_player_id)   # And current score.
+            )
             if not (isinstance(player_move, int) and player_move >= 0 and player_move < len(options)):
                 print(f"{self.active_player_id.upper()} Player made move out of possible range. They forfeit")
                 winner = self._get_other_player(self.active_player_id)
