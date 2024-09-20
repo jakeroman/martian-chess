@@ -41,9 +41,9 @@ class NeuralnetPlayer(BasePlayer):
         # Prepare PyTorch network
         self.network = nn.Sequential(
             nn.Linear(input_size, 128),
-            nn.ReLU(),
+            nn.Sigmoid(),
             nn.Linear(128, 128),
-            nn.ReLU(),
+            nn.Sigmoid(),
             nn.Linear(128, len(self.move_space)),
             nn.Softmax(dim=-1)
         )
