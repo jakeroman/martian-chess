@@ -6,9 +6,11 @@ from players.base import BasePlayer
 
 
 class MartianChessReferee:
-    def __init__(self, top_player: BasePlayer, bottom_player: BasePlayer, first_player: str | None = None):
+    def __init__(self, top_player: BasePlayer, bottom_player: BasePlayer, display_board: bool = True, first_player: str | None = None):
         self.game = MartianChessBoard()
-        self.view = MartianChessView()
+        self.display_board = display_board
+        if display_board:
+            self.view = MartianChessView()
         self.top_player = top_player
         self.bottom_player = bottom_player
         self.first_player = first_player or PlayerID.BOTTOM
@@ -23,7 +25,8 @@ class MartianChessReferee:
         # Game loop
         winner = False
         while not winner:
-            self.view.redraw(self.game.board) # Update view
+            if self.display_board:
+                self.view.redraw(self.game.board) # Update view
 
             # Get options for player
             player_object = self._get_player_object(self.active_player_id)
@@ -57,7 +60,8 @@ class MartianChessReferee:
             self.active_player_id = self._get_other_player(self.active_player_id)
 
         # Inform players of their result and final score
-        print(f"{winner.upper()} Player was victorious!")
+        if self.display_board:
+            print(f"{winner.upper()} Player was victorious!")
         loser = self._get_other_player(winner)
         self._get_player_object(winner).game_over(True, self._get_player_score(winner))
         self._get_player_object(loser).game_over(False, self._get_player_score(loser))
