@@ -1,4 +1,5 @@
 from copy import deepcopy
+import os
 import pdb
 
 import numpy as np
@@ -12,20 +13,20 @@ from scipy.special import softmax
 class NeuralnetPlayer(BasePlayer):
     def __init__(
         self, 
-        gamma: float = 0.99, 
-        epsilon: float = 1.0, 
-        epsilon_decay: float = 0.995, 
-        epsilon_min: float = 0.01, 
-        learning_rate: float = 0.001,
-        board_width: int = 4, 
-        board_height: int = 8,
-        num_piece_types: int = 3,
+        weights_file: str | None = None,    # Optionally, provide a file to load/save weights.
+        gamma: float = 0.99,                # High values prioritize future reward over short term reward.
+        learning_rate: float = 0.001,       # How quickly the model adjusts weights
+        board_width: int = 4,               # Optional parameter for nonstandard board width
+        board_height: int = 8,              # Optional parameter for nonstandard board height
+        num_piece_types: int = 3,           # Special parameter for adapting player to other games
+        weights_save_freq: int = 20,        # How often to save weights to file in number of games
     ):
         # Set player parameters
+        self.weights_file = weights_file
+        self.weights_save_freq = weights_save_freq
+        self.weights_save_counter = weights_save_freq
+
         self.gamma = gamma
-        # self.epsilon = epsilon
-        # self.epsilon_decay = epsilon_decay
-        # self.epsilon_min = epsilon_min
         self.learning_rate = learning_rate
 
         self.board_width = board_width
@@ -47,6 +48,14 @@ class NeuralnetPlayer(BasePlayer):
             nn.Softmax(dim=-1)
         )
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=0.001)
+
+        # Load network weights from file if provided
+        if weights_file:
+            if os.path.exists(weights_file):
+                weights = torch.load(weights_file, weights_only=True)
+                self.network.load_state_dict(weights)
+            else:
+                print(f"Warning: Could not find weights file: {weights_file}, starting with random network.")
 
 
     def forward(self, flat_board_state):
@@ -129,3 +138,12 @@ class NeuralnetPlayer(BasePlayer):
         # Update the network with a final reward for this game
         reward = (50 if winner else -50) + score*2
         self.learn(reward)
+
+        # If weight persistence is enabled, consider saving weights
+        if self.weights_file:
+            self.weights_save_counter -= 1 # Decrement save counter
+            if self.weights_save_counter <= 0:
+                # Save weights
+                self.weights_save_counter = self.weights_save_freq # Reset counter
+                torch.save(self.network.state_dict(), self.weights_file)
+                print("Network weights saved.")

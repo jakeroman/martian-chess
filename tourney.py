@@ -4,7 +4,7 @@ from players import RandomPlayer, NeuralnetPlayer
 
 
 random_player = RandomPlayer()
-ai_player = NeuralnetPlayer()
+ai_player = NeuralnetPlayer("network.pt")
 
 referee = MartianChessReferee(ai_player, random_player)
 
