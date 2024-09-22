@@ -442,7 +442,7 @@ const InteractiveMartianChessView = Class.create({
                 checkerTile.setAttributeNS(null, "width", boardPixelSize + "");
 
                 // Check if this tile is around moved piece
-                if (movedPiecePos && isAdjacent(i, j, movedPiecePos.x, movedPiecePos.y)) {
+                if (this.nextPosition && isAdjacent(i, j, movedPiecePos.x, movedPiecePos.y)) {
                     checkerTile.setAttributeNS(null, "class", "martianChessMovedPiece");
                 }
                 else {
