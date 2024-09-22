@@ -24,6 +24,7 @@ class MartianChessReferee:
 
         # Game loop
         winner = False
+        move_count = 0
         while not winner:
             if self.display_board:
                 self.view.redraw(self.game.board) # Update view
@@ -58,6 +59,15 @@ class MartianChessReferee:
 
             # Switch players
             self.active_player_id = self._get_other_player(self.active_player_id)
+            
+            # Limit max moves
+            move_count += 1
+            if move_count == 1000:
+                # They both lose
+                other = self._get_other_player(self.active_player_id)
+                self._get_player_object(self.active_player_id).game_over(False, self._get_player_score(self.active_player_id))
+                self._get_player_object(other).game_over(False, self._get_player_score(other))
+                return False
 
         # Inform players of their result and final score
         if self.display_board:
