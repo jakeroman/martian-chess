@@ -440,8 +440,17 @@ const InteractiveMartianChessView = Class.create({
                 checkerTile.setAttributeNS(null, "posY", new String(j));
                 checkerTile.setAttributeNS(null, "height", boardPixelSize + "");
                 checkerTile.setAttributeNS(null, "width", boardPixelSize + "");
-                checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
+
+                // Check if this tile is around moved piece
+                if (movedPiecePos && isAdjacent(i, j, movedPiecePos.x, movedPiecePos.y)) {
+                    checkerTile.setAttributeNS(null, "class", "martianChessMovedPiece");
+                }
+                else {
+                    checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
+                }
+
                 boardSvg.appendChild(checkerTile);
+
                 if (listener != undefined) {
                     var player = listener;
                     checkerTile.onclick = function(event) {player.handleClick(event);}
@@ -513,6 +522,11 @@ const InteractiveMartianChessView = Class.create({
         bottomScoreDisplay.setAttributeNS(null, "fill", "black");
         bottomScoreDisplay.setAttributeNS(null, "overflow", "visible");
         boardSvg.appendChild(bottomScoreDisplay);
+    },
+
+    // Check adjacency
+    isAdjacent(x1, y1, x2, y2) {
+        return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1
     },
 
     redraw(boardState) { // gets rid of board contents -cam
@@ -598,12 +612,10 @@ const InteractiveMartianChessView = Class.create({
     
     selectTile: function(tile) {
         this.selectedTile = tile;
-        // this.addXs(this.selectedTile.box.column, this.selectedTile.box.row);
     },
     
     deselectTile: function() {
         this.selectedTile = undefined;
-        // this.removeXs();
     },
     
     selectMoveTile: function(tile) {
@@ -616,7 +628,6 @@ const InteractiveMartianChessView = Class.create({
     }
 
 });
-
 
 const InteractiveMartianChessViewFactory = Class.create({ // MartianChess ViewFactory
 
