@@ -13,6 +13,7 @@ class NeuralnetPlayer(BasePlayer):
         gamma: float = 0.99,                # High values prioritize future reward over short term reward.
         learning_rate: float = 0.001,       # How quickly the model adjusts weights
         move_penalty: float = 0.1,          # How much to subtract from reward for not doing anything
+        repeat_penalty: float = 1,          # How much to subtract from reward for returning to previous position
         board_width: int = 4,               # Optional parameter for nonstandard board width
         board_height: int = 8,              # Optional parameter for nonstandard board height
         num_piece_types: int = 3,           # Special parameter for adapting player to other games
@@ -26,6 +27,7 @@ class NeuralnetPlayer(BasePlayer):
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.move_penalty = move_penalty
+        self.repeat_penalty = repeat_penalty
 
         self.board_width = board_width
         self.board_height = board_height
@@ -33,6 +35,7 @@ class NeuralnetPlayer(BasePlayer):
         self.game_memory = [] # For storing moves during the game to be used for learning later
         self.last_score = 0 # Keep track of the last score so that reward can only reward change in score
         self.last_decision_move_id = None # For storing the last move we made
+        self.last_position = (0,0,0,0) # For storing the position of the last piece we moved
 
         # Generate move space
         self.move_space = NeuralPlayerUtils.get_all_possible_moves(board_width, board_height)
@@ -121,12 +124,18 @@ class NeuralnetPlayer(BasePlayer):
         decision_option_id = options.index(decision_move)
 
         # Add information from last move to player memory
-        reward = score - self.last_score - self.move_penalty
+        reward = score - self.last_score
         self.last_score = score
+        if reward <= 0: # If score didn't increase, apply move penalty
+            reward -= self.move_penalty
+        if (options[decision_option_id][0],options[decision_option_id][1]) == self.last_position:
+            reward -= self.repeat_penalty
+        self.last_position = (options[decision_option_id][2],options[decision_option_id][3])
+
         if self.last_decision_move_id is not None: # Now that we have the reward from our last move, we can update that
             self.game_memory.append((self.last_flat_board, self.last_decision_move_id, reward, flat_board))
-            self.last_flat_board = flat_board
-            self.last_decision_move_id = decision_move_id
+        self.last_flat_board = flat_board
+        self.last_decision_move_id = decision_move_id
 
         # Finally, make the move
         return decision_option_id
@@ -134,7 +143,7 @@ class NeuralnetPlayer(BasePlayer):
 
     def game_over(self, winner, score):
         # Update the network with a final reward for this game
-        reward = (50 if winner else -25)
+        reward = (10 if winner else -10) + score
         self.learn(reward)
 
         self.last_score = 0 # Reset last score counter
