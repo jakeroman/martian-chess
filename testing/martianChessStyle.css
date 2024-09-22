@@ -22,5 +22,5 @@ rect.martianChessOddTile {
 .martianChessMovedPiece {
     stroke: green;
     stroke-width: 4;
-    fill: none;
+    fill: rgb(190, 20, 20);
 }
