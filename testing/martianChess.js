@@ -441,8 +441,8 @@ const InteractiveMartianChessView = Class.create({
                 checkerTile.setAttributeNS(null, "height", boardPixelSize + "");
                 checkerTile.setAttributeNS(null, "width", boardPixelSize + "");
 
-                // Check if this tile is around a moved piece
-                if (this.position && isAdjacent(i, j, this.position.x, this.position.y)) {
+                // Check if this tile is around moved piece
+                if (this.nextPosition && isAdjacent(i, j, movedPiecePos.x, movedPiecePos.y)) {
                     checkerTile.setAttributeNS(null, "class", "martianChessMovedPiece");
                 }
                 else {
@@ -493,15 +493,6 @@ const InteractiveMartianChessView = Class.create({
                     pieceTile.setAttributeNS(null, "width", new String(pieceSize));
                     pieceTile.setAttributeNS(null, "posX", new String(i));
                     pieceTile.setAttributeNS(null, "posY", new String(j));
-
-                    // Check if this tile is around moved piece
-                    if (this.position && isAdjacent(i, j, this.position.x, this.position.y)) {
-                        checkerTile.setAttributeNS(null, "class", "martianChessMovedPiece");
-                    }
-                    else {
-                        checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
-                    }
-                    
                     pieceTile.setAttributeNS(null, "class", "martianChessPiece");
                     boardSvg.appendChild(pieceTile);
                     if (listener != undefined) {
