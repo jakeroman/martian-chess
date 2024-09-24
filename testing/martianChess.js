@@ -416,6 +416,16 @@ const InteractiveMartianChessView = Class.create({
         var svgNS = "http://www.w3.org/2000/svg";
         var boardSvg = document.createElementNS(svgNS, "svg");
 
+        // Selected tile potential moves
+        var options = []
+        if (this.selectedX != undefined) {
+            var pieceType = this.position.getSpace(this.selectedX, this.selectedY)
+            options = this.position.getOptionsForPiece(this.drawPlayerIndex, pieceType, this.selectedX, this.selectedY)
+        }
+
+        this.containerElementCache = containerElement
+        this.listenerCache = listener
+
         // Calculate board scale
         var boardWidth = Math.min(getAvailableHorizontalPixels(containerElement), window.innerWidth - 200);
         var boardPixelSize = Math.min(window.innerHeight, boardWidth) / 10;
@@ -442,8 +452,18 @@ const InteractiveMartianChessView = Class.create({
                 checkerTile.setAttributeNS(null, "width", boardPixelSize + "");
 
                 // Check if this tile is around moved piece
-                if (this.nextPosition && isAdjacent(i, j, movedPiecePos.x, movedPiecePos.y)) {
-                    checkerTile.setAttributeNS(null, "class", "martianChessMovedPiece");
+                var potentialMove = false
+                for (var optionId = 0; optionId < options.length; optionId++) {
+                    if (options[optionId][0] === i && options[optionId][1] === j) {
+                        potentialMove = true
+                    }
+                }
+
+                if (potentialMove === true) {
+                    checkerTile.setAttributeNS(null, "class", "martianChessPotentialMove");
+                }
+                else if (this.selectedX === i && this.selectedY === j) {
+                    checkerTile.setAttributeNS(null, "class", "martianChessSelectedTile");
                 }
                 else {
                     checkerTile.setAttributeNS(null, "class", "martianChess" + parityString + "Tile");
@@ -529,84 +549,48 @@ const InteractiveMartianChessView = Class.create({
         return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1
     },
 
-    redraw(boardState) { // gets rid of board contents -cam
-        while (this.container.firstChild) {
-            this.container.removeChild(this.container.firstChild)
-        
-        }
-        // Draw board again
-        for (let x = 0; x < boardState.length; x++) {
-            const col = boardState[x]
-            for (let y = 0; y < col.length; y++) {
-                const boardVal = col[y]
-    
-                var imgElement = document.createElement('img') // creates new HTML image object
-                imgElement.src = this.images[boardVal].src // sets source of new image obj to the appropriate image for the piece necessary
-    
-                // Now we need to put the element somewhere, perferably its correct spot
-                var cell = document.createElement('div') // creates div element 
-    
-                // Position the div correctly on the board
-                cell.style.gridRowStart = y
-                cell.style.gridColStart = x
-    
-                // Display image in the div
-                cell.appendChild(imgElement)
-                
-                this.container.appendChild(cell) // Add the div to the HTML container as a child
-            }
-    
-        }
-    },
-
     // Beginning of Interactivity
 
     getNextPositionFromClick: function(event, playerIndex) {
         var clickedTile = event.target;
         var clickX = Number(clickedTile.getAttribute('posX'));
         var clickY = Number(clickedTile.getAttribute('posY'));
+
+        // Make sure there is a piece to select
+        if (this.position.getSpace(clickX,clickY) === 0 && this.selectedTile === undefined) {
+            return null;
+        }
+
+        // Save to variables
+        this.drawPlayerIndex = playerIndex
+        this.selectedX = clickX
+        this.selectedY = clickY
+        this.draw(this.containerElementCache, this.listenerCache)
     
         // this.containerElement.addEventListener('click', this.handleClick.bind(this)); // event handler logic
     
         // Determine the piece the player wants to move
         if (this.selectedTile === undefined) {
-            console.log("No active tile, selecting ",clickX,clickY)
 
             this.selectTile(clickedTile);
             return null;
         }
         // Determine which tile the piece should capture 
         else {
-            console.log("Yes active tile!", this.selectedTile)
             var selectedX = Number(this.selectedTile.getAttribute('posX'));
             var selectedY = Number(this.selectedTile.getAttribute('posY'));
     
             // Deselect tile if we clicked on the same one
             if (selectedX === clickX && selectedY === clickY) {
-                this.deselectMoveTile();
+                this.deselectTile();
                 return null;
             }
 
             this.selectedTile = undefined
             const clone = this.position.clone();
-            console.log("Requested move from ",selectedX,selectedY,"to",clickX,clickY)
             success = clone.makeMove(playerIndex,selectedX,selectedY,clickX,clickY)
-            console.log(success)
+            this.deselectTile()
             return clone
-            // possibleTiles = this.position.movableTiles(newPieceLoc, board, oldPieceLoc);
-    
-            // for (var i = 0; i < possibleTiles.length; i++) {
-            //     const possibleTile = possibleTiles[i];
-    
-            //     if (this.position.equals(capturedTile, possibleTile)) {
-            //         flag = true;
-            //         break;
-            //     }
-            // }
-    
-            // if (flag) {
-            //     this.selectMoveTile(clickedTile)
-            // }
         }
     },
     
@@ -616,6 +600,8 @@ const InteractiveMartianChessView = Class.create({
     
     deselectTile: function() {
         this.selectedTile = undefined;
+        this.selectedX = undefined;
+        this.selectedY = undefined;
     },
     
     selectMoveTile: function(tile) {

@@ -19,8 +19,14 @@ rect.martianChessOddTile {
     stroke-width: 4;
 }
 
-.martianChessMovedPiece {
+.martianChessSelectedTile{
+    fill:#062b58;
+    stroke: #68a6f1;
+    stroke-width: 4;
+}
+
+.martianChessPotentialMove {
+    fill:#0b4f26;
     stroke: green;
     stroke-width: 4;
-    fill: rgb(190, 20, 20);
 }
