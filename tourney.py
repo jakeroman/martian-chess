@@ -4,7 +4,7 @@ from players import RandomPlayer, NeuralnetPlayer
 
 
 random_player = RandomPlayer()
-ai_player = NeuralnetPlayer("network.pt", gamma=0.9, learning_rate=0.005)
+ai_player = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.1, learning_rate=0.001, move_penalty=0.5, repeat_penalty=10)
 
 referee = MartianChessReferee(ai_player, random_player, False)
 
@@ -13,14 +13,15 @@ bottom_wins = 0
 ctr = 0
 while True:
     ctr += 1
-    print("Game:", ctr, " | RL wins:", top_wins," | Random wins:",bottom_wins,"| Win %:",int((top_wins/ctr)*100))
-    res = referee.play_round()
+    res, score = referee.play_round()
+    drawstr = ""
     if res == False:
-        print("Draw")
+        drawstr = "[Draw]"
     elif res == PlayerID.TOP:
         top_wins += 1
     else:
         bottom_wins += 1
+    print("Game:", ctr, " | RL wins:", top_wins," | Random wins:",bottom_wins,"| Win %:",int((top_wins/ctr)*100),"| Score:", score, drawstr)
 
 print("TOURNAMENT RESULTS")
 print(top_wins)

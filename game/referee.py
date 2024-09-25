@@ -62,12 +62,12 @@ class MartianChessReferee:
             
             # Limit max moves
             move_count += 1
-            if move_count == 1000:
+            if move_count == 200:
                 # They both lose
                 other = self._get_other_player(self.active_player_id)
-                self._get_player_object(self.active_player_id).game_over(False, self._get_player_score(self.active_player_id))
-                self._get_player_object(other).game_over(False, self._get_player_score(other))
-                return False
+                self._get_player_object(self.active_player_id).game_over(False, -100)
+                self._get_player_object(other).game_over(False, -100)
+                return False, 0
 
         # Inform players of their result and final score
         if self.display_board:
@@ -75,7 +75,7 @@ class MartianChessReferee:
         loser = self._get_other_player(winner)
         self._get_player_object(winner).game_over(True, self._get_player_score(winner))
         self._get_player_object(loser).game_over(False, self._get_player_score(loser))
-        return winner
+        return winner, self._get_player_score(PlayerID.TOP) - self._get_player_score(PlayerID.BOTTOM)
 
 
     def _get_other_player(self, player_id):

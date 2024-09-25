@@ -1,19 +1,26 @@
 import os
+import random
 
 import numpy as np
-from players.base import BasePlayer
-from players.neuralnet.utils import NeuralPlayerUtils
 import torch
 import torch.nn as nn
+
+from players.base import BasePlayer
+from players.neuralnet.utils import NeuralPlayerUtils
+from game.enum import PlayerID
 
 class NeuralnetPlayer(BasePlayer):
     def __init__(
         self, 
         weights_file: str | None = None,    # Optionally, provide a file to load/save weights.
         gamma: float = 0.99,                # High values prioritize future reward over short term reward.
+        epsilon: float = 0.01,              # Chance that the player will make a random move
         learning_rate: float = 0.001,       # How quickly the model adjusts weights
         move_penalty: float = 0.1,          # How much to subtract from reward for not doing anything
         repeat_penalty: float = 1,          # How much to subtract from reward for returning to previous position
+        time_target: int = 50,              # The target for how many moves we would like to finish a game in
+        time_penalty: float = 0.01,         # Penalty for surpassing time target to encourage short games
+        win_lose_reward: float = 10,        # How much to punish/reward player for winning or losing
         board_width: int = 4,               # Optional parameter for nonstandard board width
         board_height: int = 8,              # Optional parameter for nonstandard board height
         num_piece_types: int = 3,           # Special parameter for adapting player to other games
@@ -25,9 +32,13 @@ class NeuralnetPlayer(BasePlayer):
         self.weights_save_counter = weights_save_freq
 
         self.gamma = gamma
+        self.epsilon = epsilon
         self.learning_rate = learning_rate
         self.move_penalty = move_penalty
         self.repeat_penalty = repeat_penalty
+        self.time_target = time_target
+        self.time_penalty = time_penalty
+        self.win_lose_reward = win_lose_reward
 
         self.board_width = board_width
         self.board_height = board_height
@@ -36,6 +47,7 @@ class NeuralnetPlayer(BasePlayer):
         self.last_score = 0 # Keep track of the last score so that reward can only reward change in score
         self.last_decision_move_id = None # For storing the last move we made
         self.last_position = (0,0,0,0) # For storing the position of the last piece we moved
+        self.move_count = 0 # For keeping track of how many moves we are into this game
 
         # Generate move space
         self.move_space = NeuralPlayerUtils.get_all_possible_moves(board_width, board_height)
@@ -45,15 +57,13 @@ class NeuralnetPlayer(BasePlayer):
         # Prepare PyTorch network
         self.network = nn.Sequential(
             nn.Linear(input_size, 256),
-            nn.Sigmoid(),
-            nn.Linear(256, 256),
-            nn.Sigmoid(),
-            nn.Linear(256, 128),
-            nn.Sigmoid(),
-            nn.Linear(128, len(self.move_space)),
+            nn.LeakyReLU(),
+            nn.Linear(256, 512),
+            nn.LeakyReLU(),
+            nn.Linear(512, len(self.move_space)),
             nn.Softmax(dim=-1)
         )
-        self.optimizer = torch.optim.Adam(self.network.parameters(), lr=0.0001)
+        self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
 
         # Load network weights from file if provided
         if weights_file:
@@ -108,6 +118,11 @@ class NeuralnetPlayer(BasePlayer):
 
 
     def make_move(self, board, options, player, score):
+        # If we are not the top player, rotate the board and options
+        if player != PlayerID.TOP:
+            board = NeuralPlayerUtils.rotate_board(board)
+            options = NeuralPlayerUtils.rotate_options(options, self.board_width, self.board_height)
+
         # Run the board state through the current network
         one_hot_board = NeuralPlayerUtils.flat_one_hot_encode_board(board) # Use one hot encoding on the board, splitting each piece type into it's own layer
         flat_board = one_hot_board.flatten() # Flatten this new representation of the board for the purpose of feeding into the neural network
@@ -119,11 +134,18 @@ class NeuralnetPlayer(BasePlayer):
         masked_decision_array = decision_array * move_mask # Apply the mask to the decision array by multiplying the two arrays
 
         # Choose the move with the highest confidence value
+        random_move = random.random() < self.epsilon
         decision_move_id = np.argmax(masked_decision_array)
         decision_move = self.move_space[decision_move_id]
-        decision_option_id = options.index(decision_move)
+        try:
+            decision_option_id = options.index(decision_move)
+        except:
+            random_move = True # If the desired option was not valid
+        
+        if random_move:
+            decision_option_id = random.randint(0, len(options)-1)
 
-        # Add information from last move to player memory
+        # Calculate state reward
         reward = score - self.last_score
         self.last_score = score
         if reward <= 0: # If score didn't increase, apply move penalty
@@ -132,23 +154,38 @@ class NeuralnetPlayer(BasePlayer):
             reward -= self.repeat_penalty
         self.last_position = (options[decision_option_id][2],options[decision_option_id][3])
 
+        # Add information from last move to player memory
         if self.last_decision_move_id is not None: # Now that we have the reward from our last move, we can update that
-            self.game_memory.append((self.last_flat_board, self.last_decision_move_id, reward, flat_board))
+            self.game_memory.append((self.last_flat_board, self.last_decision_move_id, reward/10, flat_board))
         self.last_flat_board = flat_board
         self.last_decision_move_id = decision_move_id
 
         # Finally, make the move
+        self.move_count += 1 # Increment move counter
         return decision_option_id
 
 
     def game_over(self, winner, score):
         # Update the network with a final reward for this game
-        reward = (10 if winner else -10) + score
-        self.learn(reward)
+        reward = 0
+        # Apply win/lose reward
+        if winner:
+            reward = self.win_lose_reward
+            reward += score # Add score to reward to encourage winning by more points
+        else:
+            reward = -self.win_lose_reward
+
+        # Apply time penalty if applicable
+        if self.move_count > self.time_target:
+            reward -= self.time_penalty * (self.move_count - self.time_target)
+
+        # Learn from rewards
+        self.learn(reward/10)
 
         self.last_score = 0 # Reset last score counter
         self.last_decision_move_id = None # Reset last move record
         self.last_flat_board = None # Reset last flat board record
+        self.move_count = 0 # Reset move counter
 
         # If weight persistence is enabled, consider saving weights
         if self.weights_file:
@@ -157,4 +194,4 @@ class NeuralnetPlayer(BasePlayer):
                 # Save weights
                 self.weights_save_counter = self.weights_save_freq # Reset counter
                 torch.save(self.network.state_dict(), self.weights_file)
-                print("Network weights saved.")
+                print(f"Network weights saved to {self.weights_file}")

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import numpy as np
 from game.board import MartianChessBoard
 
@@ -45,3 +46,20 @@ class NeuralPlayerUtils:
         options_set = set(options) # Convert options to a set for faster access
         mask = [1 if move in options_set else 0 for move in move_space]
         return np.array(mask)
+    
+    @staticmethod
+    def rotate_board(board):
+        """Performs a 180 degree rotation of the board (for allowing a top specific player to play as a bottom player for instance)"""
+        rotated_board = np.flip(np.flip(deepcopy(board),1),0) # Flip along both X and Y axis to effectively rotate 180*
+        return rotated_board
+    
+    @staticmethod
+    def rotate_options(options, width, height):
+        """Takes a list of option tuples and rotates them by 180 degrees. Designed to be used in conjunction with rotate board."""
+        w, h = width-1, height-1
+        rotated_options = []
+        for option in options:
+            from_x, from_y = option[0], option[1]
+            to_x, to_y = option[2], option[3]
+            rotated_options.append((w - from_x, h - from_y, w - to_x, w - to_y))
+        return rotated_options
