@@ -555,41 +555,41 @@ const InteractiveMartianChessView = Class.create({
         var clickedTile = event.target;
         var clickX = Number(clickedTile.getAttribute('posX'));
         var clickY = Number(clickedTile.getAttribute('posY'));
+        this.drawPlayerIndex = playerIndex
 
         // Make sure there is a piece to select
         if (this.position.getSpace(clickX,clickY) === 0 && this.selectedTile === undefined) {
             return null;
         }
 
-        // Save to variables
-        this.drawPlayerIndex = playerIndex
-        this.selectedX = clickX
-        this.selectedY = clickY
-        this.draw(this.containerElementCache, this.listenerCache)
-    
-        // this.containerElement.addEventListener('click', this.handleClick.bind(this)); // event handler logic
-    
-        // Determine the piece the player wants to move
-        if (this.selectedTile === undefined) {
-
-            this.selectTile(clickedTile);
+        // Make sure we have ownership of the clicked space
+        if (!this.position.checkSpaceOwnership(playerIndex,clickX,clickY) && this.selectedTile === undefined) {
             return null;
         }
-        // Determine which tile the piece should capture 
-        else {
-            var selectedX = Number(this.selectedTile.getAttribute('posX'));
-            var selectedY = Number(this.selectedTile.getAttribute('posY'));
     
+        // Determine the piece the player wants to move
+        if (this.selectedTile === undefined) { // No piece selected
+            this.selectedX = clickX
+            this.selectedY = clickY
+            this.selectTile(clickedTile);
+            this.draw(this.containerElementCache, this.listenerCache) // Redraw
+            return null;
+        }
+        else { // Piece is selected
             // Deselect tile if we clicked on the same one
-            if (selectedX === clickX && selectedY === clickY) {
+            if (this.selectedX === clickX && this.selectedY === clickY) {
+                this.selectedX = undefined
+                this.selectedY = undefined
                 this.deselectTile();
+                this.draw(this.containerElementCache, this.listenerCache) // Redraw
                 return null;
             }
 
             this.selectedTile = undefined
             const clone = this.position.clone();
-            success = clone.makeMove(playerIndex,selectedX,selectedY,clickX,clickY)
+            success = clone.makeMove(playerIndex,this.selectedX,this.selectedY,clickX,clickY)
             this.deselectTile()
+            this.draw(this.containerElementCache, this.listenerCache) // Redraw
             return clone
         }
     },
