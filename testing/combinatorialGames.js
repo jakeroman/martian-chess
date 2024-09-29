@@ -1568,8 +1568,8 @@ const BinaryGeography = Class.create(CombinatorialGame, {
             whiteStartRow = Math.floor(Math.random() * height);
         } 
         while (whiteStartColumn == blackStartColumn && whiteStartRow == blackStartRow) {
-            whiteStartColumn = Math.floor(Math.random() * height);
-            whiteStartRow = Math.floor(Math.random() * width);
+            whiteStartColumn = Math.floor(Math.random() * width);
+            whiteStartRow = Math.floor(Math.random() * height);
         }
         
         this.lastBlackColumn = blackStartColumn;
@@ -1577,9 +1577,9 @@ const BinaryGeography = Class.create(CombinatorialGame, {
         this.lastWhiteColumn = whiteStartColumn;
         this.lastWhiteRow = whiteStartRow;
         
-        this.columns = new Array();
+        this.columns = [];
         for (var colI = 0; colI < width; colI++) {
-            var column = new Array();
+            var column = [];
             for (var rowI = 0; rowI < height; rowI++) {
                 column.push(this.EMPTY);
             }
@@ -1603,7 +1603,16 @@ const BinaryGeography = Class.create(CombinatorialGame, {
         if (this.getWidth() == 0) {
             return 0;
         } else {
-            return this.columns[0].length;
+            //we're having a bug, so I'm doing extra work here
+            const basicHeight = this.columns[0].length;
+            for (var i = 0; i < this.columns.length; i++) {
+                const columnHeight = this.columns[i].length;
+                if (columnHeight != basicHeight) {
+                    console.log("Error!  Column " + i + " has the wrong height!");
+                    debugPosition = this;
+                }
+            }
+            return basicHeight; 
         }
     }
     
@@ -1620,22 +1629,22 @@ const BinaryGeography = Class.create(CombinatorialGame, {
         for (var col = 0; col < this.columns.length; col++) {
             for (var row = 0; row < this.columns[col].length; row++) {
                 if (this.columns[col][row] != other.columns[col][row]) {
-                    console.log("Not equal because of space col = " + col + "  row = " + row);
+                    //console.log("Not equal because of space col = " + col + "  row = " + row);
                     return false;
                 }
             }
         }
         if (this.lastBlackColumn != other.lastBlackColumn) {
-            console.log("failed black column");
+            //console.log("failed black column");
             return false;
         } else if (this.lastBlackRow != other.lastBlackRow) {
-            console.log("failed black row");
+            //console.log("failed black row");
             return false;
         } else if (this.lastWhiteColumn != other.lastWhiteColumn) {
-            console.log("failed white column");
+            //console.log("failed white column");
             return false;
         } else if (this.lastWhiteRow != other.lastWhiteRow) {
-            console.log("failed white row");
+            //console.log("failed white row");
             return false;
         }
         return true;
@@ -1645,8 +1654,8 @@ const BinaryGeography = Class.create(CombinatorialGame, {
      * Clone.
      */
     ,clone: function() {
-        var width = this.getWidth();
         var height = this.getHeight();
+        var width = this.getWidth();
         var other = new BinaryGeography(height, width);
         for (var col = 0; col < width; col++) {
             for (var row = 0; row < height; row++) {
@@ -1664,7 +1673,7 @@ const BinaryGeography = Class.create(CombinatorialGame, {
      * Gets the options.
      */
     ,getOptionsForPlayer: function(playerId) {
-        var options = new Array();
+        var options = [];
         //options for adding to the black path
         var lastTokens = [[this.lastBlackColumn, this.lastBlackRow], [this.lastWhiteColumn, this.lastWhiteRow]];
         for (var i = 0; i < lastTokens.length; i++) {
@@ -1685,6 +1694,8 @@ const BinaryGeography = Class.create(CombinatorialGame, {
                 }
             }
         }
+        globalParent = this;
+        globalOptions = options;
         return options;
     }
         
@@ -7041,10 +7052,10 @@ var ForcedCaptureHnefatafl = Class.create(CombinatorialGame, {
         }
         
         if (captureOptions.length > 0) {
-            console.log("There are capture moves.");
+            //console.log("There are capture moves.");
             return captureOptions;
         } else {
-            console.log("No capture moves.");
+            //console.log("No capture moves.");
             return nonCaptureOptions;
         }
     }
@@ -7551,8 +7562,8 @@ const InteractiveForcedCaptureHnefataflView = Class.create({
         }
         if (listener != undefined) {
             const playerId = listener.playerIndex;
-            console.log("playerId: " + playerId);
-            console.log("capture move? " + this.position.hasCaptureMove(playerId));
+            //console.log("playerId: " + playerId);
+            //console.log("capture move? " + this.position.hasCaptureMove(playerId));
             if (this.position.hasCaptureMove(listener.playerIndex)) {
                 console.log("Displaying capture move message!");
                 const captureMessage = document.createElementNS(svgNS, "text");
@@ -9425,7 +9436,10 @@ Manalath.prototype.UNCOLORED = 2;
 Manalath.prototype.PLAYER_NAMES = ["Blue", "Red"];
 
 
-
+/**
+ * View for Manalath.
+ * @author: Christina Shatney.
+ */
 var InteractiveManalathView = Class.create({
 
     initialize: function(position) {
@@ -9523,7 +9537,7 @@ var InteractiveManalathView = Class.create({
                         if (listener != undefined) {
                             var player = listener;
                             circle.onclick = function(event) {
-                                console.log("clicked on: (" + event.target.column + ", " + event.target.row + ")");
+                                //console.log("clicked on: (" + event.target.column + ", " + event.target.row + ")");
                                 player.handleClick(event);
                             };
                         }
@@ -9557,7 +9571,7 @@ var InteractiveManalathView = Class.create({
                         if (listener != undefined) {
                             var player = listener;
                             circle.onclick = function(event) {
-                                console.log("clicked on: (" + event.target.column + ", " + event.target.row + ")");
+                                //console.log("clicked on: (" + event.target.column + ", " + event.target.row + ")");
                                 player.handleClick(event);
                             };
                         }
@@ -9587,7 +9601,7 @@ var InteractiveManalathView = Class.create({
                         if (listener != undefined) {
                             var player = listener;
                             circle.onclick = function(event) {
-                                console.log("clicked on: (" + event.target.column + ", " + event.target.row + ")");
+                                //console.log("clicked on: (" + event.target.column + ", " + event.target.row + ")");
                                 player.handleClick(event);
                             };
                         }
@@ -9604,17 +9618,10 @@ var InteractiveManalathView = Class.create({
      */
     ,getNextPositionFromClick: function(event, currentPlayer, containerElement, player) {
         this.destroyPopup();
-        console.log("Clicked!");
+        //console.log("Clicked!");
         var self = this;
         //create the popup
         this.popup = document.createElement("div");
-        var redButton = document.createElement("button");
-        redButton.appendChild(toNode("Red"));
-        redButton.onclick = function() {
-            self.destroyPopup();
-            player.sendMoveToRef(self.position.getOptionWith(event.target.column, event.target.row, Manalath.prototype.RED));
-        };
-        this.popup.appendChild(redButton);
 
         var blueButton = document.createElement("button");
         blueButton.appendChild(toNode("Blue"));
@@ -9623,6 +9630,14 @@ var InteractiveManalathView = Class.create({
             player.sendMoveToRef(self.position.getOptionWith(event.target.column, event.target.row, Manalath.prototype.BLUE));
         };
         this.popup.appendChild(blueButton);
+        
+        var redButton = document.createElement("button");
+        redButton.appendChild(toNode("Red"));
+        redButton.onclick = function() {
+            self.destroyPopup();
+            player.sendMoveToRef(self.position.getOptionWith(event.target.column, event.target.row, Manalath.prototype.RED));
+        };
+        this.popup.appendChild(redButton);
 
         this.popup.style.position = "fixed";
         this.popup.style.display = "block";
@@ -9646,10 +9661,11 @@ var InteractiveManalathView = Class.create({
             this.popup = null;
         }
     }
-});  //end of InteractiveAtroposView
+});  //end of InteractiveManalathView
 
 /**
- * View Factory
+ * View Factory for Manalath
+ * @author: Christina Shatney.
  */
 var InteractiveManalathViewFactory = Class.create({
     /**
@@ -9673,9 +9689,13 @@ var InteractiveManalathViewFactory = Class.create({
         return this.getInteractiveBoard(position);
     }
 
-}); //end of InteractiveAtroposViewFactory
+}); //end of InteractiveManalathViewFactory
 
 
+/**
+ * Creates a new Manalath game.
+ * @author: Christina Shatney. 
+ */
 function newManalathGame() {
     var viewFactory = new InteractiveManalathViewFactory();
     var playDelay = 1000;
@@ -10817,7 +10837,7 @@ var InteractivePaintCanView = Class.create({
      * Draws the board.
      */
     ,draw: function(containerElement, listener) {
-        console.log("Drawing...");
+        //console.log("Drawing...");
         yoGabba = containerElement;
         gabba = this;
         //clear out the other children of the container element
@@ -12096,6 +12116,346 @@ var InteractiveSVGReverseClobberView = Class.create(InteractiveSVGClobberView, {
 
 
 
+/////////////////////////////// Toppling Dominoes /////////////////////////////////////
+
+
+/**
+ * Toppling Dominoes game
+ * 
+ * Grid is stored as a 2D array of single rows.  
+ */
+const TopplingDominoes = Class.create(CombinatorialGame, {
+    
+    /**
+     * Constructor.
+     * 
+     */
+    initialize: function(numRows, minDominoesInRow, maxDominoesInRow) {
+        this.playerNames = ["Blue", "Red"];
+        this.rows = [];
+        //default probability
+        const colors = [CombinatorialGame.prototype.LEFT, CombinatorialGame.prototype.RIGHT];
+        var numBlueEnds = 0;
+        var numRedEnds = 0;
+        for (var i = 0; i < numRows; i++) {
+            const row = [];
+            const dominoDifference = maxDominoesInRow - minDominoesInRow;
+            const numDominoes = Math.floor(Math.random() * dominoDifference) + minDominoesInRow;
+            for (var j = 0; j < numDominoes; j++) {
+                row.push(randomChoice(colors));
+            }
+            this.rows.push(row);
+            if (row[0] == CombinatorialGame.prototype.LEFT) {
+                numBlueEnds ++;
+                if (numBlueEnds > numRows) {
+                    //we have too many blue dominoes on the ends and need to make this one red instead
+                    row[0] = CombinatorialGame.prototype.RIGHT;
+                    numRedEnds++;
+                    numBlueEnds--;
+                } 
+            } else {
+                numRedEnds ++;
+                if (numRedEnds > numRows) {
+                    //we have too many red dominoes on the ends and need to make this one blue instead
+                    row[0] = CombinatorialGame.prototype.LEFT;
+                    numRedEnds--;
+                    numBlueEnds++;
+                }
+            }
+            if (row[row.length-1] == CombinatorialGame.prototype.LEFT) {
+                numBlueEnds++;
+                if (numBlueEnds > numRows) {
+                    //we have too many blue dominoes on the ends and need to make this one red instead
+                    row[row.length-1] = CombinatorialGame.prototype.RIGHT;
+                    numRedEnds++;
+                    numBlueEnds--;
+                } 
+            } else {
+                numRedEnds++;
+                if (numRedEnds > numRows) {
+                    //we have too many red dominoes on the ends and need to make this one blue instead
+                    row[row.length-1] = CombinatorialGame.prototype.LEFT;
+                    numRedEnds--;
+                    numBlueEnds++;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Returns the width of this board.
+     */
+    ,getMaxNumDominoes: function() {
+        var maxLength = 0;
+        for (const row of this.rows) {
+            if (row.length > maxLength) {
+                maxLength = row.length;
+            }
+        }
+        return maxLength;
+    }
+    
+    /**
+     * Returns the height of this board.
+     */
+    ,getNumRows: function() {
+        return this.rows.length;
+    }
+    
+    /**
+     * Equals!
+     */
+    ,equals: function(other) {
+        return omniEquals(this.rows, other.rows);
+    }
+    
+    /**
+     * Clone.
+     */
+    ,clone: function() {
+        const copy = new TopplingDominoes(1, 1, 1);
+        copy.rows = omniClone(this.rows);
+        return copy;
+    }
+    
+    /**
+     * Gets the options.
+     */
+    ,getOptionsForPlayer: function(playerId) {
+        const options = [];
+        for (var i = 0; i < this.rows.length; i++) {
+            const row = this.rows[i];
+            for (var j = 0; j < row.length; j++) {
+                if (row[j] == playerId) {
+                    options.push(this.getLeftPushOption(i, j));
+                    options.push(this.getRightPushOption(i, j));
+                }
+            }
+        }
+        return options;
+    }
+    
+    /**
+     * Gets an option by knocking a domino to the left.
+     */
+    ,getLeftPushOption: function(rowIndex, dominoIndex) {
+        const option = this.clone();
+        //option.rows[rowIndex].splice(0, dominoIndex+1);
+        for (var i = 0; i <= dominoIndex; i++) {
+            option.rows[rowIndex][i] = TopplingDominoes.prototype.NO_DOMINO;
+        }
+        return option;
+    }
+    
+    /**
+     * Gets an option by knocking a domino to the right.
+     */
+    ,getRightPushOption: function(rowIndex, dominoIndex) {
+        const option = this.clone();
+        //option.rows[rowIndex].splice(dominoIndex, option.rows[rowIndex].length - dominoIndex);
+        for (var i = dominoIndex; i < option.rows[rowIndex].length; i++) {
+            option.rows[rowIndex][i] = TopplingDominoes.prototype.NO_DOMINO;
+        }
+        return option;
+    }
+    
+}); // end of TopplingDominoes
+
+
+
+
+var InteractiveTopplingDominoesView = Class.create({
+    
+    /**
+     * Constructor.
+     */
+    initialize: function(position) {
+        this.position = position;
+    }
+    
+    /**
+     * Draws the board.
+     */
+    ,draw: function(containerElement, listener) {
+        //clear out the other children of the container element
+        while (containerElement.hasChildNodes()) {
+            containerElement.removeChild(containerElement.firstChild);
+        }
+        const svgNS = "http://www.w3.org/2000/svg";
+        const boardSvg = document.createElementNS(svgNS, "svg");
+        //now add the new board to the container
+        containerElement.appendChild(boardSvg);
+        const screenWidth = window.innerWidth - 350;
+        const screenHeight = window.innerHeight - 150;
+        boardSvg.setAttributeNS(null, "width", screenWidth);
+        boardSvg.setAttributeNS(null, "height", screenHeight);
+        
+        const numRows = this.position.getNumRows();
+        const maxNumDominoes = this.position.getMaxNumDominoes();
+        
+        var dominoWidth = screenWidth / (2*maxNumDominoes + 4); //add space on either end for two dominoes
+        var dominoHeight = screenHeight / (1.5 * numRows + 1); //add space for a half row on top and bottom.
+        
+        const DOMINO_RATIO_HEIGHT_TO_WIDTH = 5;
+        
+        if (dominoWidth * DOMINO_RATIO_HEIGHT_TO_WIDTH > dominoHeight) {
+            //dominoes would be too wide 
+            dominoWidth = dominoHeight / DOMINO_RATIO_HEIGHT_TO_WIDTH;
+        } else {
+            //dominoes might be too tall
+            dominoHeight = dominoWidth * DOMINO_RATIO_HEIGHT_TO_WIDTH;
+        }
+        
+        for (var rowI = 0; rowI < numRows; rowI++) {
+            const row = this.position.rows[rowI];
+            const rowLen = row.length;
+            //draw the dominoes
+            for (var domI = 0; domI < rowLen; domI++) {
+                if (this.position.rows[rowI][domI] != TopplingDominoes.prototype.NO_DOMINO) {
+                    const domino = document.createElementNS(svgNS, "rect");
+                    domino.setAttributeNS(null, "x", (screenWidth/2 + (2 * dominoWidth * (domI - rowLen/2))).toString());
+                    domino.setAttributeNS(null, "y", (dominoHeight * (1.5 * rowI + .3)).toString());
+                    domino.setAttributeNS(null, "width", dominoWidth.toString());
+                    domino.setAttributeNS(null, "height", dominoHeight.toString());
+                    domino.style.stroke = "black";
+                    if (row[domI] == CombinatorialGame.prototype.RIGHT) {
+                        domino.style.fill = "red";
+                        if (listener != undefined) {
+                            var player = listener;
+                            domino.row = rowI;
+                            domino.index = domI;
+                            domino.player = row[domI];
+                            domino.onclick = function(event) {player.handleClick(event);}
+                        }
+                    } else {
+                        domino.style.fill = "blue";
+                        if (listener != undefined) {
+                            var player = listener;
+                            domino.row = rowI;
+                            domino.index = domI;
+                            domino.player = row[domI];
+                            domino.onclick = function(event) {player.handleClick(event);}
+                        }
+                    }
+                    boardSvg.appendChild(domino);
+                }
+            }
+            
+            //draw the board this row is on
+            const platform = document.createElementNS(svgNS, "rect");
+            platform.setAttributeNS(null, "x", (screenWidth/2 + (dominoWidth * (-1 * (rowLen+2)))).toString());
+            platform.setAttributeNS(null, "y", (dominoHeight * (1.5 * rowI + 1.3)).toString());
+            platform.setAttributeNS(null, "width", (2* dominoWidth * (rowLen + 2)).toString());
+            platform.setAttributeNS(null, "height", (.1 * dominoHeight).toString());
+            platform.style.stroke = "black";
+            platform.style.fill = "brown";
+            boardSvg.appendChild(platform);
+        }
+    }
+
+    /**
+     * Handles the mouse click.
+     */
+    ,getNextPositionFromClick: function(event, currentPlayer, containerElement, player) {
+        const domino = event.target;
+        const rowIndex = domino.row;
+        const dominoIndex = domino.index;
+        this.destroyPopup();
+        var self = this;
+        //create the popup
+        if (domino.player == currentPlayer) {
+            this.popup = document.createElement("div");
+            const leftButton = document.createElement("button");
+            leftButton.appendChild(toNode("<-- Push"));
+            leftButton.onclick = function() {
+                self.destroyPopup();
+                const chosenOption = self.position.getLeftPushOption(rowIndex, dominoIndex);
+                player.sendMoveToRef(chosenOption);
+            };
+            this.popup.appendChild(leftButton);
+
+            const rightButton = document.createElement("button");
+            rightButton.appendChild(toNode("Push -->"));
+            rightButton.onclick = function() {
+                self.destroyPopup();
+                const chosenOption = self.position.getRightPushOption(rowIndex, dominoIndex);
+                player.sendMoveToRef(chosenOption);
+            };
+            this.popup.appendChild(rightButton);
+
+            this.popup.style.position = "fixed";
+            this.popup.style.display = "block";
+            this.popup.style.opacity = 1;
+            this.popup.width = Math.min(window.innerWidth/2, 100);
+            this.popup.height = Math.min(window.innerHeight/2, 50);
+            this.popup.style.left = event.clientX + "px";
+            this.popup.style.top = event.clientY + "px";
+            document.body.appendChild(this.popup);
+        }
+        return null;
+    }
+
+    /**
+     * Destroys the popup color window.
+     */
+    ,destroyPopup: function() {
+        if (this.popup != null) {
+            this.popup.parentNode.removeChild(this.popup);
+            this.selectedElement = undefined;
+            this.popup = null;
+        }
+    }
+    
+}); //end of InteractiveTopplingDominoesView class
+
+/**
+ * View Factory for TopplingDominoes
+ */
+var InteractiveTopplingDominoesViewFactory = Class.create({
+    /**
+     * Constructor
+     */
+    initialize: function() {
+    }
+
+    /**
+     * Returns an interactive view
+     */
+    ,getInteractiveBoard: function(position) {
+        return new InteractiveTopplingDominoesView(position);
+    }
+
+    /**
+     * Returns a view.
+     */
+    ,getView: function(position) {
+        return this.getInteractiveBoard(position);
+    }
+
+}); //end of InteractiveTopplingDominoesViewFactory
+
+/**
+ * Launches a new TopplingDominoes game.
+ */
+function newTopplingDominoesGame() {
+    var viewFactory = new InteractiveTopplingDominoesViewFactory();
+    var playDelay = 1000;
+    var width = parseInt($('boardWidth').value);
+    var height = parseInt($('boardHeight').value);
+    var controlForm = $('gameOptions');
+    var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
+    var rightPlayer =  eval(getSelectedRadioValue(controlForm.elements['rightPlayer']));
+    const players = [leftPlayer, rightPlayer];
+    var game = new TopplingDominoes(height, Math.max(2, Math.floor(width/2)), width);
+    var ref = new Referee(game, players, viewFactory, "MainGameBoard", $('messageBox'), controlForm);
+};
+TopplingDominoes.prototype.PLAYER_NAMES = ["Blue", "Red"];
+TopplingDominoes.prototype.NO_DOMINO = Math.min(CombinatorialGame.prototype.LEFT, CombinatorialGame.prototype.RIGHT) - 1;
+
+
+
+
+
 /////////////////////////////// Transverse Wave /////////////////////////////////////
 
 
@@ -12228,7 +12588,6 @@ var TransverseWave = Class.create(CombinatorialGame, {
     }
     
 }); // end of TransverseWave class
-
 
 
 
@@ -13021,6 +13380,13 @@ var BestMoveAndResults = Class.create( {
     }
     
     /**
+     * Returns the move options in this.
+     */
+    ,getMoves: function() {
+        return this.moves; //TODO: we should probably clone these
+    }
+    
+    /**
      * Checks for parentage and prints a message.
      */
     ,checkLegalOption: function(parent, playerId) {
@@ -13210,6 +13576,7 @@ var DepthSearchPlayer = Class.create(ComputerPlayer, {
      * @param depth       The maximum depth to search to.
      */
     ,getBestMovesFrom: function(playerIndex, position, depth) {
+        depth = depth || this.maxDepth;
         var options = position.getOptionsForPlayer(playerIndex);
         var bestOptions = new NullBestMoveAndResults();
         if (options.length == 0) {
@@ -13331,7 +13698,7 @@ function getRadioPlayerOptions(playerId, namesAndPlayerOptions, defaultId) {
     } else if (playerId == CombinatorialGame.prototype.RIGHT) {
         playerName = "right";
         if (defaultId == undefined) {
-            defaultIndex = 2;
+            defaultIndex = 0;
         }
     } else {
         console.log("getRadioPlayerOptions got an incorrect playerId");
@@ -13568,15 +13935,24 @@ function createBasicGridGameOptionsForManalath(minWidth, maxWidth, defaultWidth,
     var heightElement = document.createDocumentFragment();
     var heightRange = createRangeInputForManalath(minHeight, maxHeight, defaultHeight, "boardHeight");
     container.appendChild(createGameOptionDiv("Height", heightRange));
+    
+    const playerOptions = [["Human", "new HumanPlayer(viewFactory)"],
+        ["Random", "new RandomPlayer(1000)"],
+        ["Very Easy", "new MCTSPlayer(3, 1000)"],
+        ["Easy", "new MCTSPlayer(10, 1000)"],
+        ["Medium (Slow)", "new MCTSPlayer(100, 1000)"],
+        ["Hard (Very Slow)", "new MCTSPlayer(250, 1000)"],
+        ["Very Hard (Extremely slow; may hang browser.)", "new MCTSPlayer(750, 1000)"]
+    ];
 
     var leftPlayerElement = document.createDocumentFragment();
     leftPlayerElement.appendChild(document.createTextNode("(Blue plays first.)"));
     leftPlayerElement.appendChild(document.createElement("br"));
-    var leftRadio = getRadioPlayerOptions(CombinatorialGame.prototype.LEFT);
+    var leftRadio = getRadioPlayerOptions(CombinatorialGame.prototype.LEFT, playerOptions, 0);
     leftPlayerElement.appendChild(leftRadio);
     container.appendChild(createGameOptionDiv("Blue:", leftPlayerElement));
 
-    var rightRadio = getRadioPlayerOptions(CombinatorialGame.prototype.RIGHT);
+    var rightRadio = getRadioPlayerOptions(CombinatorialGame.prototype.RIGHT, playerOptions, 0);
     container.appendChild(createGameOptionDiv("Red:", rightRadio));
 
     var startButton = document.createElement("input");
@@ -13697,38 +14073,49 @@ function getCommonMCTSOptions(viewFactory, delay, lowAIDifficulty, highAIDifficu
     return playerOptions;
 };
 
-var MCTSPlayer = Class.create(ComputerPlayer, {
+
+/**
+ * Creates a Monte Carlo Tree-Search player.
+ * Author: Raymond Riddell.  (Slight changes by Kyle Burke.)
+ */
+const MCTSPlayer = Class.create(ComputerPlayer, {
 
     /**
      * Constructor
+     * numTrials is the maximum number of rollouts the player will do
      * The delay doesn't work!  There's no way to pause a fruitful function.
      */
-
-    initialize: function(delay) {
+    initialize: function(numTrials, delay) {
+        this.maxNumTrials = numTrials;
         this.delayMilliseconds = delay;
     },
 
     givePosition: function(playerIndex, position, referee) {
-        var head = new MCTSNode(position, null, null, 0, 0);
-        console.log(head);
+        var head = new MCTSNode(position, null, null, 0, 0, playerIndex);
+        const searchDepth = 3;
+        const depthPlayer = new DepthSearchPlayer(1, searchDepth);
+        //console.log(head);
         var current = head;
         // Variable to keep track of number of iterations through MCTS
         var resource = 0;
         // Actual MCTS
-        while (resource < 50000) {
+        const differenceToPrint = 5;
+        var priorPercentage = -differenceToPrint;
+        while (resource < this.maxNumTrials) {
+            //print out a message to the console about the progress so far
+            const currentPercentage = Math.floor(100 * (resource+1) / this.maxNumTrials);
+            if (currentPercentage >= priorPercentage + differenceToPrint) {
+                priorPercentage = currentPercentage;
+                console.log("Thinking... " + currentPercentage + '% complete...');
+            }
             // If the current position has no children
             if (current.getChildren() == null) {
                 // If the current position has never been sampled
                 if (current.getTimesSampled() == 0) {
                     // Rollout on current, determining whether rollout resulted in a win or loss
-                    var value = this.rollout(current, current.position.getOptionsForPlayer(playerIndex), playerIndex);
-                    // Backpropogate up the tree, increasing the number of times sampled by one and the value of the states by the value of the rollout
-                    var tempCurrent = current;
-                    while (tempCurrent != null) {
-                        tempCurrent.setTimesSampled(tempCurrent.getTimesSampled() + 1);
-                        tempCurrent.setValue(tempCurrent.getValue() + value);
-                        tempCurrent = tempCurrent.getParent();
-                    }
+                    var value = this.rollout(current);
+                    // Backpropagate up the tree, increasing the number of times sampled by one and the value of the states by the value of the rollout
+                    current.backPropagate(value);
                     resource += 1;
                     current = head;
                     continue;
@@ -13736,18 +14123,16 @@ var MCTSPlayer = Class.create(ComputerPlayer, {
                 // If the current node has no children, but has been sampled before
                 else {
                     // Get all of the next available moves from the current board state
-                    var childrenAsPositions = current.position.getOptionsForPlayer(playerIndex);
+                    //var childrenAsPositions = current.position.getOptionsForPlayer(current.getPlayerIndex()); 
+                    var childrenAsPositions = depthPlayer.getBestMovesFrom(current.getPlayerIndex(), current.position).getMoves();
                     // If there are no available moves, do a "fake" rollout
                     if (childrenAsPositions.length == 0) {
                         //console.log("TEST");
-                        var value = this.rollout(current, current.position.getOptionsForPlayer(playerIndex), playerIndex);
-                        
-                        var tempCurrent = current;
-                        while (tempCurrent != null) {
-                            tempCurrent.setTimesSampled(tempCurrent.getTimesSampled() + 1);
-                            tempCurrent.setValue(tempCurrent.getValue() + value);
-                            tempCurrent = tempCurrent.getParent();
+                        var value = this.rollout(current);
+                        if (value != current.getPlayerIndex()) {
+                            console.log("Didn't get the correct player!");
                         }
+                        current.backPropagate(value);
                         resource += 1;
                         current = head;
                         continue;
@@ -13761,16 +14146,11 @@ var MCTSPlayer = Class.create(ComputerPlayer, {
                         }
                         current.setChildren(childrenAsNodes);
                         // Because all these new children have never been sampled before, their UCB1 values are all infinite, so we just pick the first one
-                        current = current.getChildren()[0];
+                        var child = current.getChildren()[0];
                         // Autobots! Roll out!
-                        var value = this.rollout(current, childrenAsPositions, playerIndex);
-                        // Backpropogate the results up the tree
-                        var tempCurrent = current;
-                        while (tempCurrent != null) {
-                            tempCurrent.setTimesSampled(tempCurrent.getTimesSampled() + 1);
-                            tempCurrent.setValue(tempCurrent.getValue() + value);
-                            tempCurrent = tempCurrent.getParent();
-                        }
+                        var value = this.rollout(child);
+                        // Backpropagate the results up the tree
+                        current.backPropagate(value);
                         resource += 1;
                         current = head;
                         continue;
@@ -13789,7 +14169,7 @@ var MCTSPlayer = Class.create(ComputerPlayer, {
                     }
                     // Otherwise, do some fancy math
                     else {
-                        ucb1.push((current.getChildren()[i].getValue() / current.getChildren()[i].getTimesSampled()) * (current.getChildren().length * Math.sqrt(Math.log(current.getTimesSampled()) / current.getChildren()[i].getTimesSampled())));
+                        ucb1.push((current.getChildren()[i].getValue() / current.getChildren()[i].getTimesSampled()) + (current.getChildren().length * Math.sqrt(Math.log(current.getTimesSampled()) / current.getChildren()[i].getTimesSampled())));
                     }
                 }
                 // Select the child with the highest UCB1 value to be the new current
@@ -13826,31 +14206,56 @@ var MCTSPlayer = Class.create(ComputerPlayer, {
                 maxIdx = i;
             }
         }
+        
+        console.log("MCTS Player: \"I'm feeling " + Math.floor(100 * max) + "% confident about my move.\"");
 
         // Return the best move
         window.setTimeout(function(){referee.moveTo(children[maxIdx].getPosition());/*arrayForSemaphore[0] = true;*/}, this.delayMilliseconds);
     },
 
-    rollout: function(current, options, playerIndex) {
+    //makes random moves until the game ends, returning the index of the winning player
+    rollout: function(current) {
+        //const searchDepth = 2;
+        //const player = new DepthSearchPlayer(1, searchDepth);
         var position = current.position;
+        var playerIndex = current.getPlayerIndex();
+        var options = position.getOptionsForPlayer(playerIndex);
         while (options.length > 0) {
-            playerIndex = 1 - playerIndex;
             position = options[Math.floor(Math.random() * options.length)];
+            //const bestMoves = player.getBestMovesFrom(playerIndex, position);
+            //position = bestMoves.getMove();
+            playerIndex = 1 - playerIndex;
             options = position.getOptionsForPlayer(playerIndex);
         }
         
-        return 1 - playerIndex;
+        return playerIndex;
     }
 })
 
 var MCTSNode = Class.create({
 
-    initialize: function(position, parent, children, timesSampled, value) {
+    initialize: function(position, parent, children, timesSampled, value, playerIndex) {
+        if (parent != null) {
+            playerIndex = 1 - parent.getPlayerIndex();
+        }
         this.position = position;               //Position = game class
         this.parent = parent;
         this.children = children;
         this.timesSampled = timesSampled;
         this.value = value;
+        this.playerIndex = playerIndex;
+    },
+    
+    //back propagate the winner up through all parents
+    //value is a 1 if it was a win for the current player, 0 otherwise
+    //refactored from above
+    backPropagate: function(winnerIndex) {
+        var value = winnerIndex == this.playerIndex ? 1 : 0;
+        this.timesSampled ++;
+        this.value += value;
+        if (this.parent != null) {
+            this.parent.backPropagate(winnerIndex);
+        }
     },
 
     getPosition: function() {
@@ -13895,6 +14300,10 @@ var MCTSNode = Class.create({
 
     hasChildren: function() {
         return this.children == null;
+    },
+    
+    getPlayerIndex: function() {
+        return this.playerIndex;
     }
 });
 
