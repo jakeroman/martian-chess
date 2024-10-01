@@ -249,7 +249,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             var cy = moves[i][1]
 
             // Prevent move rejection (undoing the last player's move)
-            if (this.lastMove && this.lastMove[5] == true && this.lastMove[0] == cx && this.lastMove[1] == cy && this.lastMove[2] == x && this.lastMove[3] == y) {
+            if (this.lastMove && this.lastMove[1] == cx && this.lastMove[2] == cy && this.lastMove[3] == x && this.lastMove[4] == y && this.lastMove[0] != playerId) {
                 continue // Skip to next move
             }
 
@@ -350,8 +350,8 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         }
 
         // Update the last move
-        var crossesCanal = !this.checkSpaceOwnership(playerId, toX, toY)
-        this.lastMove = {"player": playerId, "fromX": x, "fromY": y, "toX": toX, "toY": toY, "crosses": crossesCanal} // Dont know if this is how this works in JavaScript
+        var crossesCanal = !(this.checkSpaceOwnership(playerId, toX, toY))
+        this.lastMove = [playerId, x, y, toX, toY, crossesCanal]
         return true
     },
 });
