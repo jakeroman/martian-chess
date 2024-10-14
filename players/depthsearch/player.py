@@ -6,7 +6,7 @@ from players.base import BasePlayer
 
 
 class DepthSearchPlayer(BasePlayer):
-    def __init__(self, board_width: int = 4, board_height: int = 4, max_depth: int = 3):
+    def __init__(self, board_width: int = 4, board_height: int = 8, max_depth: int = 3):
         self.board_width = board_width
         self.board_height = board_height
         self.max_depth = max_depth
