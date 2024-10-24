@@ -1,4 +1,5 @@
 import os
+import pdb
 import random
 
 import numpy as np
@@ -25,11 +26,13 @@ class NeuralnetPlayer(BasePlayer):
         board_height: int = 8,              # Optional parameter for nonstandard board height
         num_piece_types: int = 3,           # Special parameter for adapting player to other games
         weights_save_freq: int = 100,       # How often to save weights to file in number of games
+        logging_enabled: bool = True,       # Whether or not the player will create a training log file (Requires weight persistence)
     ):
         # Set player parameters
         self.weights_file = weights_file
         self.weights_save_freq = weights_save_freq
         self.weights_save_counter = weights_save_freq
+        self.logging_enabled = logging_enabled
 
         self.gamma = gamma
         self.epsilon = epsilon
@@ -48,6 +51,7 @@ class NeuralnetPlayer(BasePlayer):
         self.last_decision_move_id = None # For storing the last move we made
         self.last_position = (0,0,0,0) # For storing the position of the last piece we moved
         self.move_count = 0 # For keeping track of how many moves we are into this game
+        self.training_log = "" # For caching training information to be written to the log file
 
         # Generate move space
         self.move_space = NeuralPlayerUtils.get_all_possible_moves(board_width, board_height)
@@ -86,6 +90,7 @@ class NeuralnetPlayer(BasePlayer):
     def learn(self, final_reward):
         # Learn from the results of a game
         loss_fn = nn.MSELoss()
+        loss = 0
         for id, memory in enumerate(self.game_memory):
             (state, action, reward, next_state) = memory # Unpack memory
             
@@ -115,6 +120,7 @@ class NeuralnetPlayer(BasePlayer):
             self.optimizer.step()
 
         self.game_memory.clear() # Clear memory to prepare for next game
+        return float(loss)
 
 
     def make_move(self, board, options, player, score):
@@ -180,8 +186,14 @@ class NeuralnetPlayer(BasePlayer):
             reward -= self.time_penalty * (self.move_count - self.time_target)
 
         # Learn from rewards
-        self.learn(reward/10)
+        final_loss = self.learn(reward/10)
 
+        # Log training if enabled
+        if self.logging_enabled:
+            winner_str = "win" if winner else ("draw" if score == -100 else "loss")
+            self.training_log += f"{winner_str},{score},{self.move_count},{final_loss}\n"
+
+        # Reset game specific counters
         self.last_score = 0 # Reset last score counter
         self.last_decision_move_id = None # Reset last move record
         self.last_flat_board = None # Reset last flat board record
@@ -195,3 +207,10 @@ class NeuralnetPlayer(BasePlayer):
                 self.weights_save_counter = self.weights_save_freq # Reset counter
                 torch.save(self.network.state_dict(), self.weights_file)
                 print(f"Network weights saved to {self.weights_file}")
+
+                # Log training if enabled
+                if self.logging_enabled:
+                    logfile = self.weights_file.split(".")[0] + ".log"
+                    with open(logfile, "a") as log:
+                        log.write(self.training_log)
+                    self.training_log = ""
