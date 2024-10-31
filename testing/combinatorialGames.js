@@ -1390,7 +1390,7 @@ var InteractiveAtroposView = Class.create({
         var boardSvg = document.createElementNS(svgNS, "svg");
         //now add the new board to the container
         containerElement.appendChild(boardSvg);
-        var boardPixelSize = Math.min(window.innerHeight, window.innerWidth - 200);
+        var boardPixelSize = Math.min(window.innerHeight, window.innerWidth - 600);
         //var boardPixelSize = 10 + (this.position.sideLength + 4) * 100
         boardSvg.setAttributeNS(null, "width", boardPixelSize);
         boardSvg.setAttributeNS(null, "height", boardPixelSize);
@@ -1535,7 +1535,7 @@ function newAtroposGame() {
 /**
  * Class for MisereAtropos ruleset.  (It ends when the three-colored triangle is created.)
  */
-const MisereAtropos = Class.create(CombinatorialGame, {
+const MisereAtropos = Class.create(Atropos, {
 
     /**
      * Constructor.
@@ -13122,6 +13122,32 @@ const Referee = Class.create({
         //console.log("  this.position: " + this.position);
         if (autoStart) this.requestNextMove();
     }
+    
+    /**
+     * Gets a hypothetical winner in another game.  Returns the index of the winner if the game is complete.  It's a bit hacky.  Sorry!  If it's not complete, it returns a -1;
+     */
+    ,getHypotheticalWinner: function(position, justMovedPlayerIndex) {
+        //TODO: it would be safer to clone this referee and then do stuff to it.  How can we do that?
+        
+        //save important things
+        const actualPosition = this.position;
+        const actualIsDone = this.isComplete;
+        const actualCurrentPlayer = this.currentPlayer;
+        //set up the current status
+        const nextPlayer = 1-justMovedPlayerIndex;
+        this.currentPlayer = nextPlayer;
+        const nextOptions = position.getOptionsForPlayer(nextPlayer);
+        this.isComplete = nextOptions.length == 0;
+        var winner = -1; //an unknown player is winning as far as we know
+        if (this.isComplete) {
+            winner = this.getWinnerIndex();
+        }
+        //put the state back!
+        this.position = actualPosition;
+        this.isComplete = actualIsDone;
+        this.currentPlayer = actualCurrentPlayer;
+        return winner;
+    }
 
     /**
      * Determines whether the options will be enabled.
@@ -13253,10 +13279,9 @@ const Referee = Class.create({
      */
     ,getWinnerIndex: function() {
         if (! this.isDone()) {
-            console.log("Asked for the winner before the game is done!!!!");
-        } else {
-            return 1 - this.currentPlayer;
+            //console.log("Asked for the winner before the game is done!!!!");
         }
+        return 1 - this.currentPlayer;
     }
 }); //end of Referee
 
@@ -13271,10 +13296,9 @@ const MisereReferee = Class.create(Referee, {
      */
     getWinnerIndex: function() {
         if (! this.isDone()) {
-            console.log("Asked for the winner before the game is done!!!!");
-        } else {
-            return this.currentPlayer;
-        }
+            //console.log("Asked for the winner before the game is done!!!!");
+        } 
+        return this.currentPlayer;
     }
     
 }); //end of MisereReferee
@@ -13890,7 +13914,7 @@ var DepthSearchPlayer = Class.create(ComputerPlayer, {
      * Chooses a move.
      */
     ,givePosition: function(playerIndex, position, referee) {
-        var bestMoves = this.getBestMovesFrom(playerIndex, position, this.maxDepth);
+        //var bestMoves = this.getBestMovesFrom(playerIndex, position, this.maxDepth);
         //console.log("Looking for a move from: " + position);
         /*
         if (bestMoves.winnability() == RESULT_WIN) {
@@ -13900,8 +13924,129 @@ var DepthSearchPlayer = Class.create(ComputerPlayer, {
         } else {
             console.log("AI doesn't feel too good about this.  Death likely in " + bestMoves.getDepth() + " moves.");
         }*/
-        var option = bestMoves.getMove();
+        //var option = bestMoves.getMove();
+        
+        const bestMovesAndOutcomes = this.getBestOutcomeMovesAndOutcomesFrom(position, playerIndex, referee, this.maxDepth);
+        const bestChosen = randomChoice(bestMovesAndOutcomes);
+        const option = bestChosen[0];
+        
         window.setTimeout(function(){referee.moveTo(option);}, this.delayMilliseconds);
+    }
+    
+    /**
+     * Converts a playerIndex to an outcome measure.  (Left -> 1, Right -> -1, Neither -> 0).
+     */
+    ,playerIndexToOutcome: function(index) {
+        if (index == CombinatorialGame.prototype.LEFT) {
+            return 1;
+        } else if (index == CombinatorialGame.prototype.RIGHT) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * Converts a playerIndex to an outcome measure.  (positive -> Left, negative -> Right, 0 -> Draw).
+     */
+    ,outcomeToPlayerIndex: function(outcome) {
+        if (outcome > 0) {
+            return CombinatorialGame.prototype.LEFT;
+        } else if (outcome < 0) {
+            return CombinatorialGame.prototype.RIGHT; 
+        } else {
+            return CombinatorialGame.prototype.DRAW;
+        }
+    }
+    
+    /**
+     * Returns a list of moves with the best outcome this player found.  Returns a list of quads: [option, conclusivity, outcome, bestDepth], where the conclusivity is a boolean indicating whether it found a win or loss or not.  outcome is an integer representing who won, on a 1: Left, -1: Right, 0: draw/no one scale.  (NOTE: this is not the usual player indices!  We're doing it this way so that it "jives" with results of scoring games.)  bestDepth is the depth you can cause that.  For wins for yourself, lower depth is better.  For losses, a higher depth is better.  If conclusivity is false, then this number doesn't matter.  
+     */
+    ,getBestOutcomeMovesAndOutcomesFrom: function(position, playerIndex, referee, depth) {
+        const options = position.getOptionsForPlayer(playerIndex);
+        const optionsAndOutcomes = [];
+        if (options.length == 0) {
+            return []; 
+        }
+        //now we can assume options has a positive length.
+        if (depth == 0) {
+            for (var i = 0; i < options.length; i++) {
+                optionsAndOutcomes.push([options[i], false, 0, 0]);
+            }
+            return optionsAndOutcomes;
+        } else {
+            for (var i = 0; i < options.length; i++) {
+                const option = options[i];
+                const otherPlayer = 1 - playerIndex;
+                const nextPlays = option.getOptionsForPlayer(otherPlayer);
+                const winner = referee.getHypotheticalWinner(option, playerIndex);
+                var completed = winner != -1;
+                var outcome = this.playerIndexToOutcome(winner);
+                if (completed) {
+                    //this option ends the game
+                    optionsAndOutcomes.push([option, completed, outcome, 1]);
+                    if (winner == playerIndex) {
+                        break; //don't keep going... let's save ourselves some time.  This isn't very good in ScoringGames, but... whatever.  Sorry, ScoringGames!
+                    }
+                } else {
+                    //the game isn't over, so we have to recurse
+                    const nextOptionsAndOutcomes = this.getBestOutcomeMovesAndOutcomesFrom(option, otherPlayer, referee, depth - 1);
+                    const firstNextOptionAndOutcome = nextOptionsAndOutcomes[0];
+                    optionsAndOutcomes.push([option, firstNextOptionAndOutcome[1], firstNextOptionAndOutcome[2], firstNextOptionAndOutcome[3] + 1]);
+                }
+            }
+            //now we need to take only the best of the ones we found.
+            optionsAndOutcomes.sort( (a,b) => {
+                if (a[2] != b[2]) {
+                    return a[2] - b[2];
+                } else if (a[3] != b[3]) {
+                    //depths are different
+                    if (a[2] < 0) {
+                        //both are a Right win 
+                        return a[3] - b[3]; //faster wins are better for Right
+                    } else {
+                        //Left win or draw
+                        return b[3] - a[3]; //faster wins are better for Left.
+                    }
+                } else if (a[1] == b[1]) {
+                    return 0;
+                } else if (a[1]) {
+                    return 1; //sure, why not?
+                } else {
+                    return -1;//okay.  I didn't really think hard about this.
+                }
+            });
+            //the array is backwards now: the best ones for left are all the way to the right.  The best ones for Right are all the way to the left.
+            
+            //now cut out the ones we don't want.  We can do that by searching.
+            if (playerIndex == CombinatorialGame.prototype.LEFT) {
+                //start from the right and go down
+                var i = optionsAndOutcomes.length - 1;
+                const highestOutcome = optionsAndOutcomes[i][2];
+                const bestDepth = optionsAndOutcomes[i][3];
+                for (; i >= 0; i--) {
+                    if (optionsAndOutcomes[i][2] < highestOutcome || optionsAndOutcomes[i][3] != bestDepth) {
+                        //cut out everything from 0 to i.
+                        optionsAndOutcomes.splice(0, i+1);
+                        break;
+                    }
+                }
+            } else {
+                //start from the left and go up
+                var i = 0;
+                const lowestOutcome = optionsAndOutcomes[i][2];
+                const bestDepth = optionsAndOutcomes[i][3];
+                for (; i < optionsAndOutcomes.length; i++) {
+                    if (optionsAndOutcomes[i][2] > lowestOutcome || optionsAndOutcomes[i][3] != bestDepth) {
+                        //cut out everything from i forward
+                        optionsAndOutcomes.splice(i, optionsAndOutcomes.length - i);
+                        break;
+                    }
+                }
+                //console.log(optionsAndOutcomes);
+            }
+            return optionsAndOutcomes;
+        }
     }
     
     /**

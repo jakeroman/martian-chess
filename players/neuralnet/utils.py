@@ -19,7 +19,8 @@ class NeuralPlayerUtils:
                 for piece in range(3):
                     board.place(piece+1, x, y) # Place this type of piece at X/Y
                     for player in board.players:
-                        all_moves.extend(board.get_player_options(player)) # Add all moves for this player
+                        newOptions = board.get_player_options(player)
+                        all_moves.extend(newOptions) # Add all moves for this player
                     board.place(0, x, y) # Remove the piece we placed
 
         # Gather unique elements from that huge list
@@ -27,7 +28,7 @@ class NeuralPlayerUtils:
         return unique_moves
     
     @staticmethod
-    def flat_one_hot_encode_board(board):
+    def one_hot_encode_board(board):
         """Takes the given board and turns it into a 3 dimensional representation (x, y, piece type) of one hot encoded values"""
         board_array = np.array(board)
     

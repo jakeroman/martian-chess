@@ -65,7 +65,7 @@ class NeuralnetPlayer(BasePlayer):
             nn.Linear(256, 512),
             nn.LeakyReLU(),
             nn.Linear(512, len(self.move_space)),
-            nn.Softmax(dim=-1)
+            nn.Sigmoid(),
         )
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
 
@@ -130,7 +130,7 @@ class NeuralnetPlayer(BasePlayer):
             options = NeuralPlayerUtils.rotate_options(options, self.board_width, self.board_height)
 
         # Run the board state through the current network
-        one_hot_board = NeuralPlayerUtils.flat_one_hot_encode_board(board) # Use one hot encoding on the board, splitting each piece type into it's own layer
+        one_hot_board = NeuralPlayerUtils.one_hot_encode_board(board) # Use one hot encoding on the board, splitting each piece type into it's own layer
         flat_board = one_hot_board.flatten() # Flatten this new representation of the board for the purpose of feeding into the neural network
 
         decision_array = self.forward(flat_board, auto_convert=True) # Perform a forward pass of the board state through the network
@@ -139,10 +139,23 @@ class NeuralnetPlayer(BasePlayer):
         move_mask = NeuralPlayerUtils.generate_move_mask(self.move_space, options) # Generate a mask of legal moves (1 = legal, 0 = not legal)
         masked_decision_array = decision_array * move_mask # Apply the mask to the decision array by multiplying the two arrays
 
-        # Choose the move with the highest confidence value
+        # Roll for epsilon
         random_move = random.random() < self.epsilon
-        decision_move_id = np.argmax(masked_decision_array)
-        decision_move = self.move_space[decision_move_id]
+
+        # Choose according to probability distribution
+        number_list = list(range(len(masked_decision_array)))
+        if sum(masked_decision_array) <= 0:
+            # In the unlikely event that there are no legal moves with a confidence above zero, make a random move
+            probability_dist_decision_move_id = 0
+            random_move = True
+        else:
+            # Make a move based on probability
+            probability_dist_decision_move_id = random.choices(number_list, weights = masked_decision_array, k=1)[0]
+
+        # Turn that decision into a move for the game
+        chosen_decision_move_id = probability_dist_decision_move_id # Set this to argmax_decision_move_id and uncomment above code to switch back
+
+        decision_move = self.move_space[chosen_decision_move_id]
         try:
             decision_option_id = options.index(decision_move)
         except:
@@ -164,7 +177,7 @@ class NeuralnetPlayer(BasePlayer):
         if self.last_decision_move_id is not None: # Now that we have the reward from our last move, we can update that
             self.game_memory.append((self.last_flat_board, self.last_decision_move_id, reward/10, flat_board))
         self.last_flat_board = flat_board
-        self.last_decision_move_id = decision_move_id
+        self.last_decision_move_id = chosen_decision_move_id
 
         # Finally, make the move
         self.move_count += 1 # Increment move counter
