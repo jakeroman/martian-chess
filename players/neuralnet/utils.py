@@ -50,17 +50,19 @@ class NeuralPlayerUtils:
     
     @staticmethod
     def rotate_board(board):
-        """Performs a 180 degree rotation of the board (for allowing a top specific player to play as a bottom player for instance)"""
-        rotated_board = np.flip(np.flip(deepcopy(board),1),0) # Flip along both X and Y axis to effectively rotate 180*
+        """Performs a 180 degree rotation of the board (useful for allowing a top-specific player to play as a bottom player)."""
+        rotated_board = np.flip(np.flip(deepcopy(board), 1), 0)  # Flip along both X and Y axes
         return rotated_board
-    
+
     @staticmethod
     def rotate_options(options, width, height):
-        """Takes a list of option tuples and rotates them by 180 degrees. Designed to be used in conjunction with rotate board."""
-        w, h = width-1, height-1
+        """
+        Rotates move options by 180 degrees. This should be used in conjunction with rotate_board.
+        Each option tuple is in the form (from_x, from_y, to_x, to_y), representing a move.
+        """
+        w, h = width - 1, height - 1
         rotated_options = []
         for option in options:
-            from_x, from_y = option[0], option[1]
-            to_x, to_y = option[2], option[3]
-            rotated_options.append((w - from_x, h - from_y, w - to_x, w - to_y))
+            from_x, from_y, to_x, to_y = option
+            rotated_options.append((w - from_x, h - from_y, w - to_x, h - to_y))
         return rotated_options
