@@ -65,7 +65,7 @@ class NeuralnetPlayer(BasePlayer):
             nn.Linear(256, 512),
             nn.LeakyReLU(),
             nn.Linear(512, len(self.move_space)),
-            nn.ReLU(),
+            nn.Softmax(dim=-1),
         )
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
 

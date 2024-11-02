@@ -738,7 +738,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             for (let i = 0; i < moveMask.length; i++) {
                 maskedConfidences.push(confidences[i] * moveMask[i])
             }
-            console.log(confidences)
+            console.log(maskedConfidences)
 
             // Make random choice using probability distribution
             let totalWeight = 0;
@@ -805,10 +805,8 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             for (let y = 0; y < height; y++) {
                 for (let piece = 1; piece < 4; piece++) {
                     board.place(piece, x, y); // Place this type of piece at X/Y
-                    for (let playerIndex = 0; playerIndex < 2; playerIndex++) {
-                        let posOptions = this.getOptionsAsList(board, playerIndex, true);
-                        allMoves = allMoves.concat(posOptions); // Add all moves for this player
-                    }
+                    let posOptions = this.getOptionsAsList(board, CombinatorialGame.prototype.LEFT, true);
+                    allMoves = allMoves.concat(posOptions); // Add all moves for this player
                     board.place(0, x, y); // Remove the piece we placed
                 }
             }

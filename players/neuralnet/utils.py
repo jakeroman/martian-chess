@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 from game.board import MartianChessBoard
+from game.enum import PlayerID
 
 
 class NeuralPlayerUtils:
@@ -18,9 +19,8 @@ class NeuralPlayerUtils:
             for y in range(height):
                 for piece in range(3):
                     board.place(piece+1, x, y) # Place this type of piece at X/Y
-                    for player in board.players:
-                        newOptions = board.get_player_options(player)
-                        all_moves.extend(newOptions) # Add all moves for this player
+                    newOptions = board.get_player_options(PlayerID.TOP)
+                    all_moves.extend(newOptions) # Add all moves for this player
                     board.place(0, x, y) # Remove the piece we placed
 
         # Gather unique elements from that huge list
