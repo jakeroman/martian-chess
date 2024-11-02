@@ -690,7 +690,7 @@ const InteractiveMartianChessViewFactory = Class.create({ // MartianChess ViewFa
 
 const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
     initialize: function() {
-        this.trained_model_path = 'converted_network/model.json'; // Path on the webserver where trained model is stored
+        this.trainedModelPath = 'converted_network/model.json'; // Path on the webserver where trained model is stored
     },
 
     givePosition: function(playerIndex, position, referee) {
@@ -699,16 +699,15 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
         window.setTimeout(async function(){
             // Load model if this is the first time
             if (playerObject.model === undefined) {
-                playerObject.model = await tf.loadLayersModel(playerObject.trained_model_path);
+                playerObject.model = await tf.loadLayersModel(playerObject.trainedModelPath);
             }
 
             // Get options for the player
-            let options = playerObject.getOptions(position, playerIndex)
-            console.log(options);
+            let optionStates = position.getOptionsForPlayer(playerIndex)
+            let options = playerObject.getOptionsAsList(position, playerIndex, false);
 
             // TODO: Flip board and options if we aren't top player
             let board = position.board;
-            console.log(board);
     
             // Encode & flatten board state
             let encodedBoard = playerObject.oneHotEncodeBoard(board);
@@ -717,28 +716,60 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             // Perform forward pass through network
             let inputTensor = tf.tensor(flattenedBoard).reshape([1,96]);
             let outputTensor = playerObject.model.predict(inputTensor);
-            let data = await outputTensor.data();
+            let confidences = await outputTensor.data();
 
-            // Generate move mask
-            let moveSpace = playerObject.getAllPossibleMoves()
-            console.log(moveSpace)
-    
-            console.log(data);
+            // Generate mask of legal moves
+            let moveSpace = playerObject.getAllPossibleMoves();
+            let moveMask = [];
+            for (let i = 0; i < moveSpace.length; i++) {
+                let move = moveSpace[i];
+                let legalMove = 0;
+                for (let j = 0; j < optionStates.length; j++) {
+                    let option = optionStates[j].lastMove;
+                    if (move[0] === option[1] && move[1] === option[2] && move[2] == option[3] && move[3] == option[4]) {
+                        legalMove = 1;
+                    }
+                }
+                moveMask.push(legalMove);
+            }
 
-    
-            // Generate and apply legal move mask
-    
-    
-            // Choose according to probability distribution
-    
+            // Apply move mask to network output
+            let maskedConfidences = []
+            for (let i = 0; i < moveMask.length; i++) {
+                maskedConfidences.push(confidences[i] * moveMask[i])
+            }
+            console.log(confidences)
+
+            // Make random choice using probability distribution
+            let totalWeight = 0;
+            let cumulativeWeights = [];
+            for (let i = 0; i < maskedConfidences.length; i++) {
+                let weight = maskedConfidences[i];
+                totalWeight += weight;
+                cumulativeWeights.push(totalWeight);
+            }
+            let randomValue = Math.random() * totalWeight;
+            let selectedMove = 0;
+            for (let i = 0; i < cumulativeWeights.length; i++) {
+                if (randomValue < cumulativeWeights[i]) {
+                    selectedMove = i;
+                    break;
+                }
+            }
+
+            // Turn move choice into a position
+            mv = moveSpace[selectedMove];
+            let moveOption = false; // TODO: Add handling incase there's no legal move here
+            for (let i = 0; i < optionStates.length; i++) {
+                let option = optionStates[i]
+                if (option.lastMove[1] == mv[0] && option.lastMove[2] == mv[1] && option.lastMove[3] == mv[2] && option.lastMove[4] == mv[3]) {
+                    moveOption = option
+                }
+            }
     
             // Make that move
-    
-    
-            // console.log(options)
-
-
-            referee.moveTo(option);
+            console.log(mv)
+            referee.moveTo(moveOption);
         }, this.delayMilliseconds);
     },
 
@@ -775,7 +806,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
                 for (let piece = 1; piece < 4; piece++) {
                     board.place(piece, x, y); // Place this type of piece at X/Y
                     for (let playerIndex = 0; playerIndex < 2; playerIndex++) {
-                        let posOptions = this.getOptions(board, playerIndex);
+                        let posOptions = this.getOptionsAsList(board, playerIndex, true);
                         allMoves = allMoves.concat(posOptions); // Add all moves for this player
                     }
                     board.place(0, x, y); // Remove the piece we placed
@@ -788,13 +819,14 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
         let uniqueMoves = allMoves.filter(
             (move, index, self) => index === self.findIndex((m) => JSON.stringify(m) === JSON.stringify(move))
         );
-        console.log(uniqueMoves);
     
         return uniqueMoves;
     },    
 
-    getOptions: function(position, playerIndex) {
-        position.lastMove = false
+    getOptionsAsList: function(position, playerIndex, ignoreLastMove) {
+        if (ignoreLastMove) {
+            position.lastMove = false
+        }
         let optionPositions = position.getOptionsForPlayer(playerIndex, true);
         let options = [];
         for (let i = 0; i < optionPositions.length; i++) {
