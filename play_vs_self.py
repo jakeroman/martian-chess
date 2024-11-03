@@ -1,12 +1,12 @@
 from game.enum import PlayerID
 from game.referee import MartianChessReferee
-from players import RandomPlayer, NeuralnetPlayer
+from players import NeuralnetPlayer
 
 
-opponent = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.01, learning_rate=0.00001, move_penalty=0.5, repeat_penalty=2, capture_reward_weight=4, weights_save_freq = -1)
-ai_player = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.01, learning_rate=0.001, move_penalty=0.5, repeat_penalty=2, capture_reward_weight=4)
+opponent = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.03, learning_rate=0.00002, move_penalty=0.7, repeat_penalty=2, weights_save_freq = -1)
+ai_player = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.03, learning_rate=0.0002, move_penalty=0.25, repeat_penalty=2, capture_reward_weight=4)
 
-referee = MartianChessReferee(ai_player, opponent, False)
+referee = MartianChessReferee(ai_player, opponent, False, move_limit=500)
 
 top_wins = 0
 bottom_wins = 0

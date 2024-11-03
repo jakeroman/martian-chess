@@ -6,7 +6,7 @@ from players.base import BasePlayer
 
 
 class MartianChessReferee:
-    def __init__(self, top_player: BasePlayer, bottom_player: BasePlayer, display_board: bool = True, first_player: str | None = None):
+    def __init__(self, top_player: BasePlayer, bottom_player: BasePlayer, display_board: bool = True, first_player: str | None = None, move_limit: int | None = None):
         self.game = MartianChessBoard()
         self.display_board = display_board
         if display_board:
@@ -14,6 +14,7 @@ class MartianChessReferee:
         self.top_player = top_player
         self.bottom_player = bottom_player
         self.first_player = first_player or PlayerID.BOTTOM
+        self.move_limit = move_limit or 200
 
 
     def play_round(self):
@@ -62,7 +63,7 @@ class MartianChessReferee:
             
             # Limit max moves
             move_count += 1
-            if move_count == 200:
+            if move_count == self.move_limit:
                 # They both lose
                 other = self._get_other_player(self.active_player_id)
                 self._get_player_object(self.active_player_id).game_over(False, -100)

@@ -759,16 +759,22 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
 
             // Turn move choice into a position
             mv = moveSpace[selectedMove];
-            let moveOption = false; // TODO: Add handling incase there's no legal move here
+            let moveOption = false;
             for (let i = 0; i < optionStates.length; i++) {
                 let option = optionStates[i]
                 if (option.lastMove[1] == mv[0] && option.lastMove[2] == mv[1] && option.lastMove[3] == mv[2] && option.lastMove[4] == mv[3]) {
-                    moveOption = option
+                    moveOption = option;
                 }
+            }
+            
+            // Handle invalid move
+            if (moveOption === false) {
+                moveOption = optionStates[Math.floor(Math.random()*optionStates.length)];
+                console.log("RL fallback option chosen.");
             }
     
             // Make that move
-            console.log(mv)
+            console.log(mv);
             referee.moveTo(moveOption);
         }, this.delayMilliseconds);
     },
