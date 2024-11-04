@@ -703,11 +703,20 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             }
 
             // Get options for the player
-            let optionStates = position.getOptionsForPlayer(playerIndex)
+            let optionStates = position.getOptionsForPlayer(playerIndex);
             let options = playerObject.getOptionsAsList(position, playerIndex, false);
 
-            // TODO: Flip board and options if we aren't top player
+            // Flip board and options if we aren't top player
             let board = position.board;
+            if (playerIndex !== CombinatorialGame.prototype.LEFT) {
+                board = playerObject.rotateBoard(board);
+                options = playerObject.rotateOptions(options,position.width,position.height)
+                for (let i = 0; i < optionStates.length; i++) {
+                    let lm = optionStates[i].lastMove
+                    let rotated_move = playerObject.rotateOptions([[lm[1],lm[2],lm[3],lm[4]]],position.width,position.height)[0]
+                    optionStates[i].lastMove = [optionStates[i][0],rotated_move[0],rotated_move[1],rotated_move[2],rotated_move[3],optionStates[i][5]]
+                }
+            }
     
             // Encode & flatten board state
             let encodedBoard = playerObject.oneHotEncodeBoard(board);
@@ -838,5 +847,28 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             options.push([opt[1],opt[2],opt[3],opt[4]]); // Reformat option as (fromX, fromY, toX, toY)
         }
         return options;
+    },
+
+    rotateBoard: function(board) {
+        const rotatedBoard = board.map(row => [...row]); // Copy board
+        rotatedBoard.reverse(); // Flip X Axis
+        for (let i = 0; i < rotatedBoard.length; i++) { // For each row
+            rotatedBoard[i].reverse(); // Flip Y Axis
+        }
+        return rotatedBoard;
+    },
+
+    rotateOptions: function(options, width, height) {
+        let w = width - 1;
+        let h = height - 1;
+        let rotated_options = [];
+        for (let i = 0; i < options.length; i++) {
+            let from_x = options[i][0];
+            let from_y = options[i][1];
+            let to_x = options[i][2];
+            let to_y = options[i][3];
+            rotated_options.push([w - from_x, h - from_y, w - to_x, h - to_y])
+        }
+        return rotated_options
     }
 })

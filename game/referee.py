@@ -74,9 +74,8 @@ class MartianChessReferee:
         if self.display_board:
             print(f"{winner.upper()} Player was victorious!")
         loser = self._get_other_player(winner)
-        self._get_player_object(winner).game_over(True, self._get_player_score(winner))
-        self._get_player_object(loser).game_over(False, self._get_player_score(loser))
-        print("Moves:",move_count,"| ",end="") # TEMP printout
+        self._get_player_object(winner).game_over(True, self._get_player_score(winner) - self._get_player_score(loser))
+        self._get_player_object(loser).game_over(False, self._get_player_score(loser) - self._get_player_score(winner))
         return winner, self._get_player_score(PlayerID.TOP) - self._get_player_score(PlayerID.BOTTOM)
 
 
