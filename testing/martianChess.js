@@ -738,6 +738,10 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
                     if (move[0] === option[1] && move[1] === option[2] && move[2] == option[3] && move[3] == option[4]) {
                         legalMove = 1;
                     }
+                    // if (playerObject.previousMove !== undefined && option[1] == playerObject.previousMove[1] && option[2] == playerObject.previousMove[0] && option[3] == playerObject.previousMove[3] && option[4] == playerObject.previousMove[2]) {
+                    //     legalMove = 0; // Override to prevent repeated moves
+                    //     console.log("Move reject:" + option)
+                    // }
                 }
                 moveMask.push(legalMove);
             }
@@ -747,7 +751,6 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             for (let i = 0; i < moveMask.length; i++) {
                 maskedConfidences.push(confidences[i] * moveMask[i])
             }
-            console.log(maskedConfidences)
 
             // Make random choice using probability distribution
             let totalWeight = 0;
@@ -766,6 +769,10 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
                 }
             }
 
+            // Use maximum confidence option to make move
+            // let selectedMove = maskedConfidences.reduce((maxIndex, currentValue, currentIndex, maskedConfidences) =>
+            //     currentValue > maskedConfidences[maxIndex] ? currentIndex : maxIndex, 0);
+
             // Turn move choice into a position
             mv = moveSpace[selectedMove];
             let moveOption = false;
@@ -783,7 +790,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             }
     
             // Make that move
-            console.log(mv);
+            playerObject.previousMove = mv
             referee.moveTo(moveOption);
         }, this.delayMilliseconds);
     },
@@ -806,6 +813,12 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
         let board = new MartianChess();
         let width = board.width;
         let height = board.height;
+
+        if (width == 4 && height == 8) {
+            // For the specific Martian Chess Board we trained on
+            console.log("Loaded static mappings")
+            return [[2, 3, 1, 4], [1, 2, 1, 1], [3, 2, 3, 6], [3, 1, 0, 1], [1, 1, 1, 5], [0, 2, 0, 6], [1, 3, 2, 3], [2, 0, 2, 3], [3, 0, 3, 1], [3, 1, 3, 6], [1, 0, 1, 5], [2, 1, 1, 1], [0, 1, 0, 7], [0, 3, 1, 3], [0, 3, 3, 0], [3, 3, 3, 0], [0, 1, 2, 1], [1, 3, 1, 4], [2, 2, 2, 6], [2, 1, 3, 1], [2, 3, 3, 3], [1, 2, 1, 3], [1, 2, 3, 0], [3, 1, 2, 0], [0, 1, 1, 2], [2, 0, 2, 5], [1, 0, 1, 7], [0, 1, 0, 0], [3, 3, 0, 6], [3, 3, 3, 2], [0, 1, 2, 3], [1, 3, 1, 6], [3, 2, 3, 1], [1, 0, 3, 0], [1, 2, 1, 5], [0, 2, 0, 1], [0, 3, 0, 6], [1, 2, 3, 2], [3, 1, 2, 2], [2, 0, 2, 7], [0, 2, 1, 2], [3, 0, 2, 0], [0, 0, 2, 0], [3, 2, 2, 2], [2, 1, 2, 4], [2, 2, 2, 1], [1, 1, 0, 1], [2, 3, 2, 6], [3, 3, 3, 4], [0, 1, 3, 4], [3, 2, 1, 0], [0, 2, 3, 2], [3, 2, 3, 3], [1, 0, 3, 2], [1, 2, 1, 7], [0, 2, 0, 3], [1, 2, 3, 4], [2, 0, 1, 1], [3, 1, 3, 3], [0, 0, 0, 5], [0, 0, 2, 2], [2, 1, 2, 6], [2, 2, 2, 3], [1, 3, 1, 1], [0, 3, 3, 6], [1, 1, 2, 0], [2, 0, 3, 1], [3, 3, 3, 6], [2, 3, 1, 3], [1, 2, 1, 0], [0, 3, 0, 1], [3, 2, 3, 5], [1, 3, 3, 1], [2, 0, 2, 2], [3, 1, 3, 5], [1, 1, 1, 7], [2, 1, 1, 0], [0, 0, 0, 7], [2, 3, 2, 1], [0, 0, 3, 3], [0, 3, 1, 2], [1, 2, 0, 1], [3, 0, 3, 3], [3, 3, 2, 3], [2, 1, 3, 0], [2, 3, 3, 2], [3, 2, 3, 7], [3, 3, 1, 1], [1, 2, 2, 1], [3, 1, 1, 1], [0, 1, 1, 1], [1, 3, 3, 3], [2, 0, 2, 4], [3, 1, 3, 7], [1, 1, 1, 0], [2, 1, 1, 2], [3, 2, 0, 2], [1, 0, 0, 1], [3, 0, 3, 5], [0, 3, 1, 4], [1, 2, 0, 3], [0, 1, 0, 2], [0, 1, 3, 1], [2, 2, 1, 2], [0, 2, 2, 0], [3, 2, 3, 0], [2, 1, 3, 2], [1, 0, 2, 1], [1, 2, 1, 4], [0, 3, 0, 5], [1, 2, 2, 3], [2, 0, 0, 0], [2, 3, 3, 4], [3, 1, 3, 0], [3, 1, 1, 3], [3, 1, 0, 4], [2, 0, 2, 6], [2, 2, 3, 2], [0, 2, 1, 1], [1, 1, 1, 2], [0, 0, 0, 2], [0, 0, 1, 1], [3, 2, 2, 1], [2, 1, 2, 3], [1, 0, 1, 2], [2, 3, 2, 5], [3, 0, 3, 7], [0, 1, 0, 4], [1, 3, 0, 2], [3, 0, 1, 0], [3, 2, 1, 2], [1, 2, 1, 6], [0, 3, 0, 7], [2, 0, 0, 2], [3, 1, 3, 2], [0, 3, 2, 1], [0, 2, 1, 3], [0, 2, 0, 5], [1, 1, 3, 1], [0, 0, 0, 4], [1, 1, 1, 4], [1, 3, 2, 2], [0, 0, 3, 0], [2, 1, 2, 5], [2, 3, 0, 1], [3, 0, 2, 1], [1, 0, 1, 4], [2, 3, 2, 7], [3, 2, 2, 3], [3, 3, 0, 3], [0, 1, 0, 6], [1, 3, 0, 4], [2, 2, 2, 5], [1, 1, 2, 2], [3, 0, 0, 3], [2, 3, 1, 2], [3, 0, 1, 2], [0, 3, 0, 0], [3, 2, 1, 4], [0, 3, 2, 3], [1, 1, 1, 6], [0, 2, 0, 7], [1, 1, 3, 3], [0, 0, 0, 6], [1, 3, 2, 4], [2, 1, 0, 1], [2, 3, 0, 3], [2, 1, 2, 7], [2, 3, 2, 0], [3, 0, 3, 2], [1, 0, 1, 6], [3, 3, 2, 2], [3, 3, 3, 1], [2, 2, 2, 7], [1, 3, 1, 5], [0, 2, 3, 5], [0, 3, 0, 2], [0, 1, 1, 0], [2, 2, 0, 0], [3, 3, 1, 3], [0, 3, 2, 5], [0, 2, 0, 0], [3, 1, 2, 1], [3, 3, 3, 7], [2, 1, 0, 3], [1, 3, 3, 5], [1, 0, 0, 0], [2, 1, 2, 0], [2, 3, 2, 2], [1, 2, 0, 2], [2, 3, 0, 5], [3, 0, 3, 4], [2, 2, 1, 1], [3, 3, 2, 4], [2, 2, 2, 0], [1, 1, 0, 0], [0, 3, 3, 3], [1, 3, 1, 7], [1, 0, 2, 0], [0, 2, 2, 2], [0, 3, 0, 4], [1, 2, 2, 2], [2, 2, 0, 2], [2, 2, 3, 1], [3, 3, 1, 5], [2, 0, 1, 0], [0, 0, 0, 1], [0, 0, 1, 0], [2, 1, 2, 2], [1, 0, 1, 1], [2, 3, 2, 4], [3, 0, 3, 6], [3, 3, 0, 0], [0, 1, 0, 3], [2, 2, 1, 3], [1, 1, 0, 2], [1, 3, 1, 0], [3, 0, 0, 0], [2, 0, 3, 0], [3, 3, 3, 5], [0, 2, 2, 4], [3, 2, 3, 4], [2, 2, 0, 4], [2, 2, 3, 3], [1, 1, 1, 3], [0, 2, 0, 4], [0, 0, 0, 3], [2, 0, 2, 1], [3, 1, 3, 4], [3, 2, 0, 5], [1, 0, 1, 3], [0, 1, 0, 5], [1, 3, 0, 3], [2, 2, 2, 4], [1, 3, 1, 2], [1, 1, 2, 1]]
+        }
 
         // Zero out board
         for (let x = 0; x < width; x++) {

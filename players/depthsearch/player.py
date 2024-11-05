@@ -32,7 +32,7 @@ class DepthSearchPlayer(BasePlayer):
         """Turn a board state into a MartianChessBoard object"""
         mcb = MartianChessBoard(self.board_width, self.board_height)
         mcb.board = deepcopy(board)
-        mcb.last_move = {"player": player}
+        mcb.last_move = {"player": self.get_other_player(player)}
         return mcb
     
     def get_position_value(self, position: MartianChessBoard):
