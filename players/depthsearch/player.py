@@ -39,9 +39,9 @@ class DepthSearchPlayer(BasePlayer):
         """Value a position based on who won it"""
         winner = position.is_game_over()
         if winner:
-            return (1 if winner == self.active_player else -1)
+            return (float('inf') if winner == self.active_player else -float('inf'))
         else:
-            return 0
+            return position.points[self.active_player]
 
     def get_best_move(self, player, position: MartianChessBoard, depth: int):
         """Recursively determine best move for this player"""

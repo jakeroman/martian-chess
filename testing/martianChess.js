@@ -81,10 +81,10 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         return this.playerNames[playerIndex];
     },
     
-    getOptionsForPlayer: function(playerId) {
+    getOptionsForPlayer: function(playerId, ignoreEnemyPieceCheck = false) {
         // First check if the game is over
         var enemyPieces = this.getControlledPieces(1-playerId)
-        if (enemyPieces.length == 0) {
+        if (enemyPieces.length == 0 && (!ignoreEnemyPieceCheck)) {
             // The game is already over
             return []
         }
@@ -134,6 +134,9 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
             // Bottom player
             focus_y1 = Math.floor(this.height/2)
             focus_y2 = Math.floor(this.height-1)
+        }
+        else {
+            console.log("Warning, unknown player: " + playerId)
         }
         return [focus_x1, focus_y1, focus_x2, focus_y2]
     },
@@ -288,24 +291,20 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         return pieces
     },
 
-    // --- Supporting functions for makeMove function ---
-
     place: function(piece, x, y) {
         // Place a piece at a given position on the board
-        this.board[x][y] = piece
+        this.board[x][y] = piece;
     },
 
     getPlayerScore: function(playerId) {
         // Return the individual score of a player
         if(this.playerId = "Left") {
-            return this.topScore
+            return this.topScore;
         }
         else {
-            return this.bottomScore
+            return this.bottomScore;
         }
     },
-
-    // --- End of supporting functions for makeMove ---
 
     makeMove: function(playerId, x, y, toX, toY) {
         // Moves a selected piece to chosen position if possible
@@ -365,11 +364,11 @@ function createBasicGridGameOptionsForMartianChess() {
     var leftPlayerElement = document.createDocumentFragment();
     leftPlayerElement.appendChild(document.createTextNode("(Top plays first.)"));
     leftPlayerElement.appendChild(document.createElement("br"));
-    var leftRadio = getRadioPlayerOptions(CombinatorialGame.prototype.LEFT);
+    var leftRadio = getMartianChessRadioPlayerOptions(CombinatorialGame.prototype.LEFT);
     leftPlayerElement.appendChild(leftRadio);
     container.appendChild(createGameOptionDiv("Top:", leftPlayerElement));
 
-    var rightRadio = getRadioPlayerOptions(CombinatorialGame.prototype.RIGHT);
+    var rightRadio = getMartianChessRadioPlayerOptions(CombinatorialGame.prototype.RIGHT);
     container.appendChild(createGameOptionDiv("Bottom:", rightRadio));
 
     var startButton = document.createElement("input");
@@ -380,6 +379,67 @@ function createBasicGridGameOptionsForMartianChess() {
     container.appendChild(startButton);
 
     return container;
+}
+
+/**
+ * Modified radio player options function to include our AI
+ */
+function getMartianChessRadioPlayerOptions(playerId, namesAndPlayerOptions, defaultId) {
+    namesAndPlayerOptions = namesAndPlayerOptions || ["Human", "Random", "Very Easy AI", "Easy AI", "Medium AI", "Tricky AI (slow)", "Hard AI (very slow)","Neural Player ✨"];
+    var playerName;
+    var defaultIndex = defaultId;
+    if (playerId == CombinatorialGame.prototype.LEFT) {
+        playerName = "left";
+        if (defaultId == undefined) {
+            defaultIndex = 0;
+        }
+    } else if (playerId == CombinatorialGame.prototype.RIGHT) {
+        playerName = "right";
+        if (defaultId == undefined) {
+            defaultIndex = 0;
+        }
+    } else {
+        console.log("getRadioPlayerOptions got an incorrect playerId");
+    }
+    var playerNames;
+    var players = [];
+    //let's fix the playerOptions if they're broken
+    if (typeof namesAndPlayerOptions[0] == 'string') {
+        playerNames = namesAndPlayerOptions;
+        for (var i = 0; i < playerNames.length; i++) {
+            const name = playerNames[i];
+            if (name == "Human") {
+                players.push("new HumanPlayer(viewFactory)"); 
+            } else if (name == "Random") {
+                players.push("new RandomPlayer(1000)");
+            } else if (name == "Very Easy AI") {
+                players.push("new DepthSearchPlayer(1000, 1)");
+            } else if (name == "Easy AI") {
+                players.push("new DepthSearchPlayer(1000, 2)");
+            } else if (name == "Medium AI") {
+                players.push("new DepthSearchPlayer(1000, 3)");
+            } else if (name.startsWith("Tricky AI")) {
+                players.push("new DepthSearchPlayer(1000, 4)");
+            } else if (name.startsWith("Hard AI")) {
+                players.push("new DepthSearchPlayer(1000, 5)");
+            } else if (name.startsWith("Neural Player")) {
+                players.push("new MartianChessNeuralPlayer()");
+            } else {
+                console.log("Didn't see an appropriate player name!!!");
+                players.push("monkey");
+            }
+        }
+    } else {
+        //it's a list
+        playerNames = [];
+        //console.log("Splitting the player list.");
+        for (var i = 0; i < namesAndPlayerOptions.length; i++) {
+            playerNames.push(namesAndPlayerOptions[i][0]);
+            players.push(namesAndPlayerOptions[i][1]);
+        }
+        //console.log(players);
+    }
+    return createRadioGroup(playerName + "Player",  playerNames, defaultIndex, players); // "Professional (hangs your browser)"
 }
 
 /**
@@ -555,7 +615,7 @@ const InteractiveMartianChessView = Class.create({
         var clickedTile = event.target;
         var clickX = Number(clickedTile.getAttribute('posX'));
         var clickY = Number(clickedTile.getAttribute('posY'));
-        this.drawPlayerIndex = playerIndex
+        this.drawPlayerIndex = playerIndex;
 
         // Make sure there is a piece to select
         if (this.position.getSpace(clickX,clickY) === 0 && this.selectedTile === undefined) {
@@ -569,28 +629,28 @@ const InteractiveMartianChessView = Class.create({
     
         // Determine the piece the player wants to move
         if (this.selectedTile === undefined) { // No piece selected
-            this.selectedX = clickX
-            this.selectedY = clickY
+            this.selectedX = clickX;
+            this.selectedY = clickY;
             this.selectTile(clickedTile);
-            this.draw(this.containerElementCache, this.listenerCache) // Redraw
+            this.draw(this.containerElementCache, this.listenerCache); // Redraw
             return null;
         }
         else { // Piece is selected
             // Deselect tile if we clicked on the same one
             if (this.selectedX === clickX && this.selectedY === clickY) {
-                this.selectedX = undefined
-                this.selectedY = undefined
+                this.selectedX = undefined;
+                this.selectedY = undefined;
                 this.deselectTile();
-                this.draw(this.containerElementCache, this.listenerCache) // Redraw
+                this.draw(this.containerElementCache, this.listenerCache); // Redraw
                 return null;
             }
 
-            this.selectedTile = undefined
+            this.selectedTile = undefined;
             const clone = this.position.clone();
-            success = clone.makeMove(playerIndex,this.selectedX,this.selectedY,clickX,clickY)
-            this.deselectTile()
-            this.draw(this.containerElementCache, this.listenerCache) // Redraw
-            return clone
+            success = clone.makeMove(playerIndex,this.selectedX,this.selectedY,clickX,clickY);
+            this.deselectTile();
+            this.draw(this.containerElementCache, this.listenerCache); // Redraw
+            return clone;
         }
     },
     
@@ -616,7 +676,6 @@ const InteractiveMartianChessView = Class.create({
 });
 
 const InteractiveMartianChessViewFactory = Class.create({ // MartianChess ViewFactory
-
     initialize: function() {
     },
 
@@ -627,5 +686,189 @@ const InteractiveMartianChessViewFactory = Class.create({ // MartianChess ViewFa
     getView: function(position) {
         return this.getInteractiveBoard(position);
     },
-
 });
+
+const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
+    initialize: function() {
+        this.trainedModelPath = 'converted_network/model.json'; // Path on the webserver where trained model is stored
+    },
+
+    givePosition: function(playerIndex, position, referee) {
+        // Return the best move
+        let playerObject = this
+        window.setTimeout(async function(){
+            // Load model if this is the first time
+            if (playerObject.model === undefined) {
+                playerObject.model = await tf.loadLayersModel(playerObject.trainedModelPath);
+            }
+
+            // Get options for the player
+            let optionStates = position.getOptionsForPlayer(playerIndex);
+            let options = playerObject.getOptionsAsList(position, playerIndex, false);
+
+            // Flip board and options if we aren't top player
+            let board = position.board;
+            if (playerIndex !== CombinatorialGame.prototype.LEFT) {
+                board = playerObject.rotateBoard(board);
+                options = playerObject.rotateOptions(options,position.width,position.height)
+                for (let i = 0; i < optionStates.length; i++) {
+                    let lm = optionStates[i].lastMove
+                    let rotated_move = playerObject.rotateOptions([[lm[1],lm[2],lm[3],lm[4]]],position.width,position.height)[0]
+                    optionStates[i].lastMove = [optionStates[i][0],rotated_move[0],rotated_move[1],rotated_move[2],rotated_move[3],optionStates[i][5]]
+                }
+            }
+    
+            // Encode & flatten board state
+            let encodedBoard = playerObject.oneHotEncodeBoard(board);
+            let flattenedBoard = encodedBoard.flat(2);
+    
+            // Perform forward pass through network
+            let inputTensor = tf.tensor(flattenedBoard).reshape([1,96]);
+            let outputTensor = playerObject.model.predict(inputTensor);
+            let confidences = await outputTensor.data();
+
+            // Generate mask of legal moves
+            let moveSpace = playerObject.getAllPossibleMoves();
+            let moveMask = [];
+            for (let i = 0; i < moveSpace.length; i++) {
+                let move = moveSpace[i];
+                let legalMove = 0;
+                for (let j = 0; j < optionStates.length; j++) {
+                    let option = optionStates[j].lastMove;
+                    if (move[0] === option[1] && move[1] === option[2] && move[2] == option[3] && move[3] == option[4]) {
+                        legalMove = 1;
+                    }
+                }
+                moveMask.push(legalMove);
+            }
+
+            // Apply move mask to network output
+            let maskedConfidences = []
+            for (let i = 0; i < moveMask.length; i++) {
+                maskedConfidences.push(confidences[i] * moveMask[i])
+            }
+            console.log(maskedConfidences)
+
+            // Make random choice using probability distribution
+            let totalWeight = 0;
+            let cumulativeWeights = [];
+            for (let i = 0; i < maskedConfidences.length; i++) {
+                let weight = maskedConfidences[i];
+                totalWeight += weight;
+                cumulativeWeights.push(totalWeight);
+            }
+            let randomValue = Math.random() * totalWeight;
+            let selectedMove = 0;
+            for (let i = 0; i < cumulativeWeights.length; i++) {
+                if (randomValue < cumulativeWeights[i]) {
+                    selectedMove = i;
+                    break;
+                }
+            }
+
+            // Turn move choice into a position
+            mv = moveSpace[selectedMove];
+            let moveOption = false;
+            for (let i = 0; i < optionStates.length; i++) {
+                let option = optionStates[i]
+                if (option.lastMove[1] == mv[0] && option.lastMove[2] == mv[1] && option.lastMove[3] == mv[2] && option.lastMove[4] == mv[3]) {
+                    moveOption = option;
+                }
+            }
+            
+            // Handle invalid move
+            if (moveOption === false) {
+                moveOption = optionStates[Math.floor(Math.random()*optionStates.length)];
+                console.log("RL fallback option chosen.");
+            }
+    
+            // Make that move
+            console.log(mv);
+            referee.moveTo(moveOption);
+        }, this.delayMilliseconds);
+    },
+
+    oneHotEncodeBoard: function(board) {
+        const boardArray = board.map(row => row.slice());
+
+        // Create a one hot encoded board for each piece type (1 means that specific piece is there)
+        const pawnsBoard = boardArray.map(row => row.map(cell => (cell === 1 ? 1 : 0)));
+        const dronesBoard = boardArray.map(row => row.map(cell => (cell === 2 ? 1 : 0)));
+        const queensBoard = boardArray.map(row => row.map(cell => (cell === 3 ? 1 : 0)));
+
+        // Stack the boards on top of eachother
+        const oneHotBoard = [pawnsBoard, dronesBoard, queensBoard];
+        return oneHotBoard;
+    },
+
+    getAllPossibleMoves: function() {
+        // Initialize the board as in the Python version
+        let board = new MartianChess();
+        let width = board.width;
+        let height = board.height;
+
+        // Zero out board
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                board.place(0,x,y);
+            }
+        }
+    
+        // Try permutations
+        let allMoves = [];
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                for (let piece = 1; piece < 4; piece++) {
+                    board.place(piece, x, y); // Place this type of piece at X/Y
+                    let posOptions = this.getOptionsAsList(board, CombinatorialGame.prototype.LEFT, true);
+                    allMoves = allMoves.concat(posOptions); // Add all moves for this player
+                    board.place(0, x, y); // Remove the piece we placed
+                }
+            }
+        }
+    
+        // Avoid premature deduplication: Keep all unique moves exactly as Python
+        // To accurately collect unique moves, convert each move into a string format and re-convert it to an array format
+        let uniqueMoves = allMoves.filter(
+            (move, index, self) => index === self.findIndex((m) => JSON.stringify(m) === JSON.stringify(move))
+        );
+    
+        return uniqueMoves;
+    },    
+
+    getOptionsAsList: function(position, playerIndex, ignoreLastMove) {
+        if (ignoreLastMove) {
+            position.lastMove = false
+        }
+        let optionPositions = position.getOptionsForPlayer(playerIndex, true);
+        let options = [];
+        for (let i = 0; i < optionPositions.length; i++) {
+            let opt = optionPositions[i].lastMove;
+            options.push([opt[1],opt[2],opt[3],opt[4]]); // Reformat option as (fromX, fromY, toX, toY)
+        }
+        return options;
+    },
+
+    rotateBoard: function(board) {
+        const rotatedBoard = board.map(row => [...row]); // Copy board
+        rotatedBoard.reverse(); // Flip X Axis
+        for (let i = 0; i < rotatedBoard.length; i++) { // For each row
+            rotatedBoard[i].reverse(); // Flip Y Axis
+        }
+        return rotatedBoard;
+    },
+
+    rotateOptions: function(options, width, height) {
+        let w = width - 1;
+        let h = height - 1;
+        let rotated_options = [];
+        for (let i = 0; i < options.length; i++) {
+            let from_x = options[i][0];
+            let from_y = options[i][1];
+            let to_x = options[i][2];
+            let to_y = options[i][3];
+            rotated_options.push([w - from_x, h - from_y, w - to_x, h - to_y])
+        }
+        return rotated_options
+    }
+})

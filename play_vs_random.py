@@ -4,7 +4,7 @@ from players import RandomPlayer, NeuralnetPlayer
 
 
 random_player = RandomPlayer()
-ai_player = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.1, learning_rate=0.001, move_penalty=0.5, repeat_penalty=10)
+ai_player = NeuralnetPlayer("network.pt", gamma=0.95, epsilon=0.01, learning_rate=0.001, move_penalty=0.5, repeat_penalty=2, capture_reward_weight=4)
 
 referee = MartianChessReferee(ai_player, random_player, False)
 

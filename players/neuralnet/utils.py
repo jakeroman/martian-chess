@@ -1,6 +1,8 @@
 from copy import deepcopy
+import pdb
 import numpy as np
 from game.board import MartianChessBoard
+from game.enum import PlayerID
 
 
 class NeuralPlayerUtils:
@@ -18,8 +20,7 @@ class NeuralPlayerUtils:
             for y in range(height):
                 for piece in range(3):
                     board.place(piece+1, x, y) # Place this type of piece at X/Y
-                    for player in board.players:
-                        all_moves.extend(board.get_player_options(player)) # Add all moves for this player
+                    all_moves.extend(board.get_player_options(PlayerID.TOP)) # Add all moves for this player
                     board.place(0, x, y) # Remove the piece we placed
 
         # Gather unique elements from that huge list
@@ -49,17 +50,19 @@ class NeuralPlayerUtils:
     
     @staticmethod
     def rotate_board(board):
-        """Performs a 180 degree rotation of the board (for allowing a top specific player to play as a bottom player for instance)"""
-        rotated_board = np.flip(np.flip(deepcopy(board),1),0) # Flip along both X and Y axis to effectively rotate 180*
+        """Performs a 180 degree rotation of the board (useful for allowing a top-specific player to play as a bottom player)."""
+        rotated_board = np.flip(np.flip(deepcopy(board), 1), 0)  # Flip along both X and Y axes
         return rotated_board
-    
+
     @staticmethod
     def rotate_options(options, width, height):
-        """Takes a list of option tuples and rotates them by 180 degrees. Designed to be used in conjunction with rotate board."""
-        w, h = width-1, height-1
+        """
+        Rotates move options by 180 degrees. This should be used in conjunction with rotate_board.
+        Each option tuple is in the form (from_x, from_y, to_x, to_y), representing a move.
+        """
+        w, h = width - 1, height - 1
         rotated_options = []
         for option in options:
-            from_x, from_y = option[0], option[1]
-            to_x, to_y = option[2], option[3]
-            rotated_options.append((w - from_x, h - from_y, w - to_x, w - to_y))
+            from_x, from_y, to_x, to_y = option
+            rotated_options.append((w - from_x, h - from_y, w - to_x, h - to_y))
         return rotated_options

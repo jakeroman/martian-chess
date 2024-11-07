@@ -118,6 +118,7 @@ const CombinatorialGame = Class.create({
 CombinatorialGame.prototype.LEFT = 0;
 CombinatorialGame.prototype.RIGHT = 1;
 CombinatorialGame.prototype.PLAYER_NAMES = ["Left", "Right"];
+CombinatorialGame.prototype.DRAW = 2;
 
 //end of CombinatorialGame
 
@@ -847,7 +848,7 @@ const InteractiveAmazonsView = Class.create({
                 }
                 if (content.includes("amazon")) {
                     text = "A";
-                    //text = "￼￼￼🐍"; //this is a green snake
+                    //text = "ï¿¼ï¿¼ï¿¼ðŸ"; //this is a green snake
                 }
                 const textColor = (content.includes("blue")) ? "blue" : "red";
                 
@@ -1111,7 +1112,7 @@ function newAmazonsGame() {
 /**
  * Class for Atropos ruleset.
  */
-var Atropos = Class.create(CombinatorialGame, {
+const Atropos = Class.create(CombinatorialGame, {
 
     /**
      * Constructor.
@@ -1389,7 +1390,7 @@ var InteractiveAtroposView = Class.create({
         var boardSvg = document.createElementNS(svgNS, "svg");
         //now add the new board to the container
         containerElement.appendChild(boardSvg);
-        var boardPixelSize = Math.min(window.innerHeight, window.innerWidth - 200);
+        var boardPixelSize = Math.min(window.innerHeight, window.innerWidth - 600);
         //var boardPixelSize = 10 + (this.position.sideLength + 4) * 100
         boardSvg.setAttributeNS(null, "width", boardPixelSize);
         boardSvg.setAttributeNS(null, "height", boardPixelSize);
@@ -1530,6 +1531,314 @@ function newAtroposGame() {
     var players = [leftPlayer, rightPlayer];
     var ref = new Referee(game, players, viewFactory, "atroposBoard", $('messageBox'), controlForm);
 }
+
+/**
+ * Class for MisereAtropos ruleset.  (It ends when the three-colored triangle is created.)
+ */
+const MisereAtropos = Class.create(Atropos, {
+
+    /**
+     * Constructor.
+     */
+    initialize: function(sideLength, lastPlay, filledCirclesAndColors) {
+        this.playerNames = ["Left", "Right"];
+        this.sideLength = sideLength;
+        this.lastPlay = null;
+        if (lastPlay != undefined && this.lastPlay != null) {
+            this.lastPlay = [lastPlay[0], lastPlay[1]];
+        }
+        if (filledCirclesAndColors == undefined) {
+            filledCirclesAndColors = this.getStartingColoredCircles();
+        }
+        filledCirclesAndColors = filledCirclesAndColors || [];
+        this.filledCircles = [];
+        for (var i = 0; i < filledCirclesAndColors.length; i++) {
+            // console.log(filledCirclesAndColors);
+            var circle = filledCirclesAndColors[i];
+            // console.log("circle: " + circle);
+            if (circle[2] != Atropos.prototype.UNCOLORED) {
+                // console.log("Circle array thing: " + [circle[0], circle[1], circle[2]]);
+                this.filledCircles.push([circle[0], circle[1], circle[2]]);
+            }
+        }
+    }
+    
+    /**
+     * Returns whether plays can be made.  (If not, then the last play created a 3-colored triangle.)
+     */
+    ,canPlay: function() {
+        if (this.lastPlay == null) {
+            return true;
+        } else {
+            const lastRow = this.lastPlay[0];
+            const lastColumn = this.lastPlay[1];
+            const lastColor = this.getCircleColor(lastRow, lastColumn);
+            const neighbors = this.getNeighboringCoordinates(lastRow, lastColumn);
+            for (var i = 0; i < neighbors.length; i++) {
+                const circleA = neighbors[i];
+                const colorA = this.getCircleColor(circleA[0], circleA[1]);
+                const circleB = neighbors[(i+1) % neighbors.length];
+                const colorB = this.getCircleColor(circleB[0], circleB[1]);
+                if (this.allThreeColors(lastColor, colorA, colorB)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    
+    /**
+     * Checks whether the three colors are different (and none are uncolored).
+     */
+    ,allThreeColors: function(colorA, colorB, colorC) {
+        if (colorA == Atropos.prototype.UNCOLORED || colorB == Atropos.prototype.UNCOLORED || colorC == Atropos.prototype.UNCOLORED) {
+            return false;
+        } else {
+            return colorA != colorB && colorB != colorC && colorC != colorA;
+        }
+    }
+
+    /**
+     * Returns the starting colors based on this.sideLength.
+     */
+    ,getStartingColoredCircles: function() {
+        var startingCircles = [];
+        //bottom row: yellow and blue
+        for (var column = 1; column < this.sideLength + 2; column ++) {
+            var row = 0;
+            var possibleColors = [Atropos.prototype.YELLOW, Atropos.prototype.BLUE];
+            startingCircles.push([row, column, possibleColors[column % 2]]);
+        }
+        //left hand side: blue and red
+        for (var row = 1; row < this.sideLength + 2; row ++) {
+            var column = 0;
+            var possibleColors = [Atropos.prototype.BLUE, Atropos.prototype.RED];
+            startingCircles.push([row, column, possibleColors[row % 2]]);
+        }
+        //right hand side: red and yellow
+        for (var row = 1; row < this.sideLength + 2; row ++) {
+            var column = this.sideLength + 2 - row;
+            var possibleColors = [Atropos.prototype.RED, Atropos.prototype.YELLOW];
+            startingCircles.push([row, column, possibleColors[row % 2]]);
+        }
+        return startingCircles;
+    }
+
+    /**
+     * Returns the color of a circle.
+     */
+    ,getCircleColor: function(row, angledColumn) {
+        for (var i = 0; i < this.filledCircles.length; i++) {
+            var circle = this.filledCircles[i];
+            if (circle[0] == row && circle[1] == angledColumn) {
+                return circle[2];
+            }
+        }
+        return Atropos.prototype.UNCOLORED;
+    }
+
+    /**
+     * Returns whether a circle is colored.
+     */
+    ,isColored: function(row, column) {
+        return this.getCircleColor(row, column) != 3;
+    }
+
+    /**
+     * Equals!
+     */
+    ,equals: function(other) {
+        if (this.sideLength != other.sideLength) {
+            return false;
+        }
+        if ((this.lastPlay == null && other.lastPlay != null) ||
+            (this.lastPlay != null && other.lastPlay == null) ||
+            (this.lastPlay != null && other.lastPlay != null &&
+             (this.lastPlay[0] != other.lastPlay[0] ||
+              this.lastPlay[1] != other.lastPlay[1]))) {
+            return false;
+        }
+        if (this.filledCircles.length != other.filledCircles.length) {
+            return false;
+        }
+        for (var i = 0; i < this.filledCircles.length; i++) {
+            var circle = this.filledCircles[i];
+            var row = circle[0];
+            var column = circle[1];
+            var color = circle[2];
+            if (other.getCircleColor(row, column) != color) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Clone!
+     */
+    ,clone: function() {
+        return new MisereAtropos(this.sideLength, this.lastPlay, this.filledCircles);
+    }
+
+    /**
+     * Gets any colors that can't be played adjacent to the two given circle locations.  (Misere version: you can always play any color.)
+     */
+    ,getIllegalColorsNearTwo: function(circleARow, circleAColumn, circleBRow, circleBColumn) {
+        return [];
+    }
+
+    /**
+     * Gets an ordered list of the 6 coordinates around a given point.
+     */
+    ,getNeighboringCoordinates: function(row, column) {
+        var neighbors = [];
+        neighbors.push([row + 1, column - 1]);
+        neighbors.push([row, column - 1]);
+        neighbors.push([row - 1, column]);
+        neighbors.push([row - 1, column + 1]);
+        neighbors.push([row, column + 1]);
+        neighbors.push([row + 1, column]);
+        return neighbors;
+    }
+
+    /**
+     * Returns whether a location is surrounded by colored spaces.
+     */
+    ,isSurrounded: function(row, column) {
+        var neighbors = this.getNeighboringCoordinates(row, column);
+        for (var i = 0; i < neighbors.length; i++) {
+            var neighbor = neighbors[i];
+            if (!this.isColored(neighbor[0], neighbor[1])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns whether the next play is a jump.
+     */
+    ,nextIsJump: function() {
+        return this.lastPlay == null || this.isSurrounded(this.lastPlay[0], this.lastPlay[1]);
+    }
+
+    /**
+     * Gets any colors that can't be played a certain location.  Misere version: there are no illegal colors anymore.
+     */
+    ,getIllegalColorsAt: function(row, column) {
+        return [];
+    }
+
+    /**
+     * Gets any colors that can be played at a location.  Misere version: it just depends on whether a play can be made.
+     */
+    ,getLegalColorsAt: function(row, column) {
+        if (this.canPlay()) {
+            return  [Atropos.prototype.RED, Atropos.prototype.BLUE, Atropos.prototype.YELLOW];
+        } else {
+            return [];
+        }
+    }
+
+    //override
+    ,getOptionsForPlayer: function(playerId) {
+        var options = [];
+        if (this.canPlay()) {
+            if (this.nextIsJump()) {
+                for (var row = 1; row < this.sideLength + 2; row ++) {
+                    for (var column = 1; column < this.sideLength + 2 - row; column ++) {
+                        var optionsAtLocation = this.getOptionsAt(row, column);
+                        options = options.concat(optionsAtLocation);
+                    }
+                }
+            } else {
+                //console.log("not a jump");
+                options = this.getOptionsAround(this.lastPlay[0], this.lastPlay[1]);
+            }
+        }
+        return options;
+    }
+
+    /**
+     * Returns a move option with an added circle.  Does not check that this isn't already colored!
+     */
+    ,getOptionWith: function(row, column, color) {
+        var clone = this.clone();
+        clone.filledCircles.push([row, column, color]);
+        clone.lastPlay = [row, column];
+        return clone;
+    }
+
+    /**
+     * Returns the options around a point.
+     */
+    ,getOptionsAround: function(row, column) {
+        var options = [];
+        var neighbors = this.getNeighboringCoordinates(row, column);
+        for (var i = 0; i < neighbors.length; i++) {
+            options = options.concat(this.getOptionsAt(neighbors[i][0], neighbors[i][1]));
+        }
+        return options;
+    }
+
+    /**
+     * Returns an array of all the options at a specific row and column.
+     */
+    ,getOptionsAt: function(row, column) {
+        var options = [];
+        if (this.canPlay()) {
+            if (!this.isColored(row, column)) {
+                var colors = this.getLegalColorsAt(row, column);
+                for (var i = 0; i < colors.length; i++) {
+                    options.push(this.getOptionWith(row, column, colors[i]));
+                }
+            }
+        }
+        return options;
+    }
+
+});
+//Some Atropos constants
+Atropos.prototype.RED = 0;
+Atropos.prototype.BLUE = 1;
+Atropos.prototype.YELLOW = 2;
+Atropos.prototype.UNCOLORED = 3;
+//end of MisereAtropos class
+
+/**
+ * Launches a new MisereAtropos game.
+ */
+function newMisereAtroposGame() {
+    var viewFactory = new InteractiveAtroposViewFactory();
+    var playDelay = 1000;
+    var width = parseInt($('boardSize').value);
+    var controlForm = $('gameOptions');
+    var leftPlayer = eval(getSelectedRadioValue(controlForm.elements['leftPlayer']));
+    var rightPlayer =  eval(getSelectedRadioValue(controlForm.elements['rightPlayer']));
+    var game = new MisereAtropos(width);
+    var players = [leftPlayer, rightPlayer];
+    var ref = new MisereReferee(game, players, viewFactory, "atroposBoard", $('messageBox'), controlForm);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //end of Atropos stuff!
 
@@ -7565,7 +7874,7 @@ const InteractiveForcedCaptureHnefataflView = Class.create({
             //console.log("playerId: " + playerId);
             //console.log("capture move? " + this.position.hasCaptureMove(playerId));
             if (this.position.hasCaptureMove(listener.playerIndex)) {
-                console.log("Displaying capture move message!");
+                //console.log("Displaying capture move message!");
                 const captureMessage = document.createElementNS(svgNS, "text");
                 captureMessage.textContent = "There is a forced move.";
                 captureMessage.setAttributeNS(null, "x", 1.1 * boxSide);
@@ -8567,7 +8876,7 @@ const InteractiveGorgonsView = Class.create({
                 }
                 if (content.includes("gorgon")) {
                     text = "G";
-                    //text = "￼￼￼🐍"; //this is a green snake
+                    //text = "ï¿¼ï¿¼ï¿¼ðŸ"; //this is a green snake
                 }
                 const textColor = (content.includes("blue")) ? "blue" : "red";
                 
@@ -8907,7 +9216,7 @@ const NonInteractiveGorgonsView = Class.create({
                 }
                 if (content.includes("gorgon")) {
                     text = "G";
-                    //text = "￼￼￼🐍"; //this is a green snake
+                    //text = "ï¿¼ï¿¼ï¿¼ðŸ"; //this is a green snake
                 }
                 const textColor = (content.includes("blue")) ? "blue" : "red";
                 
@@ -12813,6 +13122,32 @@ const Referee = Class.create({
         //console.log("  this.position: " + this.position);
         if (autoStart) this.requestNextMove();
     }
+    
+    /**
+     * Gets a hypothetical winner in another game.  Returns the index of the winner if the game is complete.  It's a bit hacky.  Sorry!  If it's not complete, it returns a -1;
+     */
+    ,getHypotheticalWinner: function(position, justMovedPlayerIndex) {
+        //TODO: it would be safer to clone this referee and then do stuff to it.  How can we do that?
+        
+        //save important things
+        const actualPosition = this.position;
+        const actualIsDone = this.isComplete;
+        const actualCurrentPlayer = this.currentPlayer;
+        //set up the current status
+        const nextPlayer = 1-justMovedPlayerIndex;
+        this.currentPlayer = nextPlayer;
+        const nextOptions = position.getOptionsForPlayer(nextPlayer);
+        this.isComplete = nextOptions.length == 0;
+        var winner = -1; //an unknown player is winning as far as we know
+        if (this.isComplete) {
+            winner = this.getWinnerIndex();
+        }
+        //put the state back!
+        this.position = actualPosition;
+        this.isComplete = actualIsDone;
+        this.currentPlayer = actualCurrentPlayer;
+        return winner;
+    }
 
     /**
      * Determines whether the options will be enabled.
@@ -12898,7 +13233,8 @@ const Referee = Class.create({
         this.view = this.viewFactory.getView(this.position);
         this.view.draw(this.getViewContainer());
         //console.log("Game over!");
-        this.setStringMessage("There are no moves for " + this.position.getPlayerName(this.currentPlayer) + ".  " + this.position.getPlayerName(1-this.currentPlayer) + " wins!");
+        const winnerIndex = this.getWinnerIndex();
+        this.setStringMessage("There are no moves for " + this.position.getPlayerName(this.currentPlayer) + ".  " + this.position.getPlayerName(winnerIndex) + " wins!");
         this.setOptionsAbleness(true);
         this.alertGameOver();
     }
@@ -12943,15 +13279,31 @@ const Referee = Class.create({
      */
     ,getWinnerIndex: function() {
         if (! this.isDone()) {
-            console.log("Asked for the winner before the game is done!!!!");
-        } else {
-            return 1 - this.currentPlayer;
+            //console.log("Asked for the winner before the game is done!!!!");
         }
+        return 1 - this.currentPlayer;
     }
 }); //end of Referee
 
 
-CombinatorialGame.prototype.DRAW = 2;
+/**
+ * A Referee for Misere Play.  (i.e., whoever makes the last move loses)
+ */
+const MisereReferee = Class.create(Referee, {
+    
+    /**
+     * Returns the winner.
+     */
+    getWinnerIndex: function() {
+        if (! this.isDone()) {
+            //console.log("Asked for the winner before the game is done!!!!");
+        } 
+        return this.currentPlayer;
+    }
+    
+}); //end of MisereReferee
+
+
 /**
  * A Referee for Scoring Play.  (i.e., whoever has the winning score at the end wins)
  */
@@ -12959,9 +13311,16 @@ const ScoringReferee = Class.create(Referee, {
     
     endGame: function() {
         Referee.prototype.endGame.call(this);
-        const winningPlayerName = this.position.getPlayerName(this.getWinnerIndex());
-        const winningMargin = Math.abs(this.getGameScore());
-        this.setStringMessage("The game is over!  " + winningPlayerName + " won by " + winningMargin + " points!");
+        var endingMessage = "The game is over!  ";
+        const winningIndex = this.getWinnerIndex();
+        if (winningIndex >= 0 && winningIndex < 2) {
+            const winningPlayerName = this.position.getPlayerName(this.getWinnerIndex());
+            const winningMargin = Math.abs(this.getGameScore());
+            endingMessage += winningPlayerName + " won by " + winningMargin + " points!";
+        } else {
+            endingMessage += "The score is tied, so the result is a draw!";
+        }
+        this.setStringMessage(endingMessage);
     }
     
     ,getWinnerIndex: function() {
@@ -13555,7 +13914,7 @@ var DepthSearchPlayer = Class.create(ComputerPlayer, {
      * Chooses a move.
      */
     ,givePosition: function(playerIndex, position, referee) {
-        var bestMoves = this.getBestMovesFrom(playerIndex, position, this.maxDepth);
+        //var bestMoves = this.getBestMovesFrom(playerIndex, position, this.maxDepth);
         //console.log("Looking for a move from: " + position);
         /*
         if (bestMoves.winnability() == RESULT_WIN) {
@@ -13565,8 +13924,129 @@ var DepthSearchPlayer = Class.create(ComputerPlayer, {
         } else {
             console.log("AI doesn't feel too good about this.  Death likely in " + bestMoves.getDepth() + " moves.");
         }*/
-        var option = bestMoves.getMove();
+        //var option = bestMoves.getMove();
+        
+        const bestMovesAndOutcomes = this.getBestOutcomeMovesAndOutcomesFrom(position, playerIndex, referee, this.maxDepth);
+        const bestChosen = randomChoice(bestMovesAndOutcomes);
+        const option = bestChosen[0];
+        
         window.setTimeout(function(){referee.moveTo(option);}, this.delayMilliseconds);
+    }
+    
+    /**
+     * Converts a playerIndex to an outcome measure.  (Left -> 1, Right -> -1, Neither -> 0).
+     */
+    ,playerIndexToOutcome: function(index) {
+        if (index == CombinatorialGame.prototype.LEFT) {
+            return 1;
+        } else if (index == CombinatorialGame.prototype.RIGHT) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * Converts a playerIndex to an outcome measure.  (positive -> Left, negative -> Right, 0 -> Draw).
+     */
+    ,outcomeToPlayerIndex: function(outcome) {
+        if (outcome > 0) {
+            return CombinatorialGame.prototype.LEFT;
+        } else if (outcome < 0) {
+            return CombinatorialGame.prototype.RIGHT; 
+        } else {
+            return CombinatorialGame.prototype.DRAW;
+        }
+    }
+    
+    /**
+     * Returns a list of moves with the best outcome this player found.  Returns a list of quads: [option, conclusivity, outcome, bestDepth], where the conclusivity is a boolean indicating whether it found a win or loss or not.  outcome is an integer representing who won, on a 1: Left, -1: Right, 0: draw/no one scale.  (NOTE: this is not the usual player indices!  We're doing it this way so that it "jives" with results of scoring games.)  bestDepth is the depth you can cause that.  For wins for yourself, lower depth is better.  For losses, a higher depth is better.  If conclusivity is false, then this number doesn't matter.  
+     */
+    ,getBestOutcomeMovesAndOutcomesFrom: function(position, playerIndex, referee, depth) {
+        const options = position.getOptionsForPlayer(playerIndex);
+        const optionsAndOutcomes = [];
+        if (options.length == 0) {
+            return []; 
+        }
+        //now we can assume options has a positive length.
+        if (depth == 0) {
+            for (var i = 0; i < options.length; i++) {
+                optionsAndOutcomes.push([options[i], false, 0, 0]);
+            }
+            return optionsAndOutcomes;
+        } else {
+            for (var i = 0; i < options.length; i++) {
+                const option = options[i];
+                const otherPlayer = 1 - playerIndex;
+                const nextPlays = option.getOptionsForPlayer(otherPlayer);
+                const winner = referee.getHypotheticalWinner(option, playerIndex);
+                var completed = winner != -1;
+                var outcome = this.playerIndexToOutcome(winner);
+                if (completed) {
+                    //this option ends the game
+                    optionsAndOutcomes.push([option, completed, outcome, 1]);
+                    if (winner == playerIndex) {
+                        break; //don't keep going... let's save ourselves some time.  This isn't very good in ScoringGames, but... whatever.  Sorry, ScoringGames!
+                    }
+                } else {
+                    //the game isn't over, so we have to recurse
+                    const nextOptionsAndOutcomes = this.getBestOutcomeMovesAndOutcomesFrom(option, otherPlayer, referee, depth - 1);
+                    const firstNextOptionAndOutcome = nextOptionsAndOutcomes[0];
+                    optionsAndOutcomes.push([option, firstNextOptionAndOutcome[1], firstNextOptionAndOutcome[2], firstNextOptionAndOutcome[3] + 1]);
+                }
+            }
+            //now we need to take only the best of the ones we found.
+            optionsAndOutcomes.sort( (a,b) => {
+                if (a[2] != b[2]) {
+                    return a[2] - b[2];
+                } else if (a[3] != b[3]) {
+                    //depths are different
+                    if (a[2] < 0) {
+                        //both are a Right win 
+                        return a[3] - b[3]; //faster wins are better for Right
+                    } else {
+                        //Left win or draw
+                        return b[3] - a[3]; //faster wins are better for Left.
+                    }
+                } else if (a[1] == b[1]) {
+                    return 0;
+                } else if (a[1]) {
+                    return 1; //sure, why not?
+                } else {
+                    return -1;//okay.  I didn't really think hard about this.
+                }
+            });
+            //the array is backwards now: the best ones for left are all the way to the right.  The best ones for Right are all the way to the left.
+            
+            //now cut out the ones we don't want.  We can do that by searching.
+            if (playerIndex == CombinatorialGame.prototype.LEFT) {
+                //start from the right and go down
+                var i = optionsAndOutcomes.length - 1;
+                const highestOutcome = optionsAndOutcomes[i][2];
+                const bestDepth = optionsAndOutcomes[i][3];
+                for (; i >= 0; i--) {
+                    if (optionsAndOutcomes[i][2] < highestOutcome || optionsAndOutcomes[i][3] != bestDepth) {
+                        //cut out everything from 0 to i.
+                        optionsAndOutcomes.splice(0, i+1);
+                        break;
+                    }
+                }
+            } else {
+                //start from the left and go up
+                var i = 0;
+                const lowestOutcome = optionsAndOutcomes[i][2];
+                const bestDepth = optionsAndOutcomes[i][3];
+                for (; i < optionsAndOutcomes.length; i++) {
+                    if (optionsAndOutcomes[i][2] > lowestOutcome || optionsAndOutcomes[i][3] != bestDepth) {
+                        //cut out everything from i forward
+                        optionsAndOutcomes.splice(i, optionsAndOutcomes.length - i);
+                        break;
+                    }
+                }
+                //console.log(optionsAndOutcomes);
+            }
+            return optionsAndOutcomes;
+        }
     }
     
     /**
@@ -14396,4 +14876,3 @@ const TriangularGridGraph = Class.create({
     }
     
 });
-
