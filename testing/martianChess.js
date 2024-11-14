@@ -385,7 +385,7 @@ function createBasicGridGameOptionsForMartianChess() {
  * Modified radio player options function to include our AI
  */
 function getMartianChessRadioPlayerOptions(playerId, namesAndPlayerOptions, defaultId) {
-    namesAndPlayerOptions = namesAndPlayerOptions || ["Human", "Random", "Very Easy AI", "Easy AI", "Medium AI", "Tricky AI (slow)", "Hard AI (very slow)","Neural Player ✨"];
+    namesAndPlayerOptions = namesAndPlayerOptions || ["Human", "Random", "Very Easy AI", "Easy AI", "Medium AI", "Tricky AI (slow)", "Greedy AI","Neural Player ✨"];
     var playerName;
     var defaultIndex = defaultId;
     if (playerId == CombinatorialGame.prototype.LEFT) {
@@ -420,8 +420,8 @@ function getMartianChessRadioPlayerOptions(playerId, namesAndPlayerOptions, defa
                 players.push("new DepthSearchPlayer(1000, 3)");
             } else if (name.startsWith("Tricky AI")) {
                 players.push("new DepthSearchPlayer(1000, 4)");
-            } else if (name.startsWith("Hard AI")) {
-                players.push("new DepthSearchPlayer(1000, 5)");
+            } else if (name.startsWith("Greedy AI")) {
+                players.push("new MartianChessGreedyPlayer()");
             } else if (name.startsWith("Neural Player")) {
                 players.push("new MartianChessNeuralPlayer()");
             } else {
@@ -814,6 +814,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
         let width = board.width;
         let height = board.height;
 
+        // Static mappings (remove once we get the new trained model in)
         if (width == 4 && height == 8) {
             // For the specific Martian Chess Board we trained on
             console.log("Loaded static mappings")
@@ -884,4 +885,33 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
         }
         return rotated_options
     }
+})
+
+const MartianChessGreedyPlayer = Class.create(ComputerPlayer, {
+    initialize: function() {
+    },
+
+    givePosition: function(playerIndex, position, referee) {
+        // Return the best move
+        options = position.getOptionsForPlayer(playerIndex);
+
+        let greediest_option = null;
+        let greediest_score = -999;
+        for (let i = 0; i < options.length; i++) {
+            let clone = position.clone();
+            let opt = options[i].lastMove;
+            clone.makeMove(playerIndex,opt[1],opt[2],opt[3],opt[4]);
+
+            let score = clone.getScore();
+            if (playerIndex == CombinatorialGame.prototype.RIGHT) {
+                score = -score; // Flip score if we are playing on the bottom
+            }
+            if (score > greediest_score) {
+                greediest_score = score;
+                greediest_option = i;
+            }
+        }
+
+        window.setTimeout(function(){referee.moveTo(options[greediest_option]);}, this.delayMilliseconds);
+    },
 })

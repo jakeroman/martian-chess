@@ -1,5 +1,6 @@
 from copy import deepcopy
 import pdb
+from typing import OrderedDict
 import numpy as np
 from game.board import MartianChessBoard
 from game.enum import PlayerID
@@ -24,7 +25,7 @@ class NeuralPlayerUtils:
                     board.place(0, x, y) # Remove the piece we placed
 
         # Gather unique elements from that huge list
-        unique_moves = list(set(all_moves))
+        unique_moves = list(OrderedDict.fromkeys(all_moves))
         return unique_moves
     
     @staticmethod

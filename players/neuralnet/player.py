@@ -4,6 +4,7 @@ import random
 import time
 
 import numpy as np
+import scipy
 import torch
 import torch.nn as nn
 
@@ -18,6 +19,7 @@ class NeuralnetPlayer(BasePlayer):
         gamma: float = 0.9,                 # High values prioritize future reward over short term reward.
         epsilon: float = 0.01,              # Chance that the player will make a random move
         epsilon_decay: float = 0.995,       # Rate at which the epsilon value decays
+        greedy: float = 0.8,                # Probability that the player will take the argmax move
         learning_rate: float = 0.001,       # How quickly the model adjusts weights
         move_penalty: float = 0.05,         # How much to subtract from reward for not doing anything
         repeat_penalty: float = 1,          # How much to subtract from reward for returning to previous position
@@ -42,6 +44,7 @@ class NeuralnetPlayer(BasePlayer):
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
+        self.greedy = greedy
         self.learning_rate = learning_rate
         self.move_penalty = move_penalty
         self.repeat_penalty = repeat_penalty
@@ -72,12 +75,13 @@ class NeuralnetPlayer(BasePlayer):
         self.network = nn.Sequential(
             nn.Linear(input_size, 256),
             nn.LeakyReLU(),
-            nn.Linear(256, 512),
+            nn.Linear(256, 256),
             nn.LeakyReLU(),
-            nn.Linear(512, len(self.move_space)),
-            nn.Softmax(dim=-1),
+            nn.Linear(256, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, len(self.move_space)),
         )
-        self.optimizer = torch.optim.NAdam(self.network.parameters(), lr=learning_rate)
+        self.optimizer = torch.optim.NAdam(self.network.parameters(), lr=learning_rate, betas=(0.8, 0.99))
 
         # Load network weights from file if provided
         if weights_file:
@@ -107,28 +111,31 @@ class NeuralnetPlayer(BasePlayer):
 
         # Replay memory
         for id, memory in enumerate(self.game_memory):
-            (state, action, reward, next_state) = memory # Unpack memory
-
-            # If this is the last memory state, use final reward
-            if (id == len(self.game_memory) - 1):
-                reward = final_reward
+            (state, action, reward, next_state, next_move_mask) = memory # Unpack memory
 
             # Predict Q values of action taken
             state_tensor = torch.FloatTensor(state) # Convert board state to a tensor
             predicted_q_values = self.forward(state_tensor) # Perform forward pass on current board state to get Q values
             predicted_q_value = predicted_q_values[action]
 
+            final_memory = 1 if (id == len(self.game_memory) - 1) else 0
+
             # Compute the target Q-value
             with torch.no_grad():
                 next_state_tensor = torch.FloatTensor(next_state) # Convert the next board state into a tensor
                 next_q_values = self.forward(next_state_tensor) # Run the next board state through the network
-                max_next_q_value = torch.max(next_q_values) # Take the highest value from the next Q tensor
-                target_q_value = reward + (self.gamma * max_next_q_value) # Calculate target Q value from state reward and futture reward
+                masked_next_q_values = next_q_values * torch.FloatTensor(next_move_mask) # Mask future rewards with legal moves
+                max_next_q_value = torch.max(masked_next_q_values) # Take the highest value from the next Q tensor
+                target_q_value = reward + (self.gamma * max_next_q_value * (1-final_memory)) # Calculate target Q value from state reward and future reward
                 target_q_value = torch.clamp(target_q_value, min=0.02, max=0.98) # Clamp target Q value for stability
 
             # Calculate loss
+            # print(predicted_q_value, target_q_value)
             base_loss = loss_fn(predicted_q_value, target_q_value)
-            loss = (base_loss + self.static_loss_offset) * (1 - (final_reward * self.final_reward_weight))
+            loss = (base_loss) * (1 - (final_reward * self.final_reward_weight))
+
+            # if (id == len(self.game_memory)-1):
+                # print("Reward:",int((final_reward*200)-100),"%",end="")
 
             # Update network
             self.optimizer.zero_grad()
@@ -168,15 +175,21 @@ class NeuralnetPlayer(BasePlayer):
             random_move = True
         else:
             # Make a move based on probability
-            probability_dist_decision_move_id = random.choices(number_list, weights = masked_decision_array, k=1)[0]
+            positive_weights_only = [max(0, w) for w in masked_decision_array]
+            probability_dist_decision_move_id = random.choices(number_list, weights = positive_weights_only, k=1)[0]
 
-        # Choose the move with the highest confidence value
+        # Calculate greedy move
         random_move = random.random() < self.epsilon
+        greedy_move = random.random() < self.greedy
         argmax_decision_move_id = np.argmax(masked_decision_array)
 
-        # Turn that decision into a move for the game
-        chosen_decision_move_id = argmax_decision_move_id # Set this to argmax_decision_move_id to switch back to just taking the highest conf move
+        # Chose which move we are using
+        if greedy_move:
+            chosen_decision_move_id = argmax_decision_move_id
+        else:
+            chosen_decision_move_id = probability_dist_decision_move_id
 
+        # Turn that decision into a move for the game
         decision_move = self.move_space[chosen_decision_move_id]
         try:
             decision_option_id = options.index(decision_move)
@@ -196,10 +209,12 @@ class NeuralnetPlayer(BasePlayer):
 
         reward = reward
         self.last_position = (options[decision_option_id][2],options[decision_option_id][3])
+        
+        # print("Reward:",reward,"Score:",score)
 
         # Add information from last move to player memory
         if self.last_decision_move_id is not None: # Now that we have the reward from our last move, we can update that
-            self.game_memory.append((self.last_flat_board, self.last_decision_move_id, reward, flat_board))
+            self.game_memory.append((self.last_flat_board, self.last_decision_move_id, reward, flat_board, move_mask))
         self.last_flat_board = flat_board
         self.last_decision_move_id = chosen_decision_move_id
 
