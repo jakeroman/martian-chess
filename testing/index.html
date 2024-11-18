@@ -12,10 +12,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script> <!-- Load Tensorflow for AI player -->
 
     <script>
-      var rulesText = "On your turn, pick one of your pieces and move to an available position.  You must attempt to capture opponents pieces to gain score. Score is based on the type of piece captured. Once a piece crosses the center line into your opponents zone of control they gain control of that piece.";
+      var rulesText = "On your turn, pick one of your pieces and move to an available position. You must attempt to capture opponents pieces to gain score. Score is based on the type of piece captured. Once a piece crosses the center line into your opponents zone of control they gain control of that piece.";
+
       function newGame() {
         newMartianChessGame();
       }
+
+      function showRules() {
+        document.getElementById("rules").innerHTML = rulesText + '<a href="C:/Users/ant48/Downloads/Code/Senior Project/mchessRules/martianChess101.html" style="display:block; text-align:center; margin-top: 10px;">More</a>';
+      }
+
     </script>
   </head>
   <body>
