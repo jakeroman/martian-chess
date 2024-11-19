@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Martian Chess 101</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+
+    <!--Navbar-->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#" onclick="goBack()">Martian Chess</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li1 class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('rules')">Rules</a>
+                </li1>
+                <li1 class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('tutorial')">Tutorial</a>
+                </li1>
+                <li1 class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('moreGames')">More Games</a>
+                </li1>
+            </ul>
+        </div>
+    </nav>
+
+    <!--Main Content-->
+    <div class="container mt-5 text-center" id="mainContent">
+        <h1 class="display-4">Martian Chess 101</h1>
+        <p class="lead">Martian Chess is a board game that requires a lot of thought as its rules are very different than that of regular chess.</p>
+        <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\3Dboard.png" class="responsive-image"/>
+    </div>
+
+    <!--rules Content Starts-->
+    <div class="container mt-5" id="rules" style="display:none">
+        <h2>Rules of the Game</h2>
+
+        <p>Martian Chess is a partisan board game, meaning the moves allowed are not solely dependent on position, it also takes into account which player is moving, what piece is being moved, and many other factors.</p>
+
+        <!--Pieces Accordion-->
+        <div class="accordion">
+            <div class="accordion-item">
+
+                <div class="accordion-header" onclick="toggleAccordion(this)">Pieces
+                    <span class="arrow">▶</span>
+                </div>
+            
+                <div class="accordion-content">
+                    <p>In two-player Martian Chess, there are three different pieces, each with its own unique move set:</p>
+                    <ol>
+                        <li>Pawn</li>
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <p class="mr-3">This piece moves one space in any diagonal direction; worth 1 pt</p>
+                            <div class="responsive-container text-center">
+                                <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\PawnMoves.png" class="responsive-image img-fluid" style="max-width: 150px; border-radius: 10px;">
+                            </div>
+                        </div>
+                
+                        <li>Drone</li>
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <p class="mr-3">This piece can move 2 spaces left, right, up, or down; worth 2 pts</p>
+                            <div class="responsive-container text-center">
+                                <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\DroneMoves.png" class="responsive-image img-fluid" style="max-width: 150px; border-radius: 10px;">
+                            </div>
+                        </div>
+                
+                        <li>Queen</li>
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <p class="mr-3">This piece can move to any space in any direction; it's worth 3 pts</p>
+                            <div class="responsive-container text-center">
+                                <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\QueenMoves.png" class="responsive-image img-fluid" style="max-width: 150px; border-radius: 10px;">
+                            </div>
+                        </div>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!--Board Accordion-->
+        <div class="accordion">
+            <div class="accordion-item">
+
+                <div class="accordion-header" onclick="toggleAccordion(this)">Board
+                    <span class="arrow">▶</span>
+                </div>
+
+                <div class="accordion-content">
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <p class="mr-3">The board in Martian Chess is rather unique as it's one of the only combinatorial games with a board that changes ownership of pieces throughout gameplay. The red line down the middle of the board signifies ownership, so every piece above the red line is the top player’s piece and everything below it is the bottom player’s but to capture another piece, you must cross the line. Our version of Martian Chess always has the Top Player go first.</p>
+                        <div class="responsive-container text-center">
+                            <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\mchessBoard.png" class="responsive-image img-fluid"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Goal Accordion-->
+        <div class="accordion">
+            <div class="accordion-item">
+
+                <div class="accordion-header" onclick="toggleAccordion(this)">Goal
+                    <span class="arrow">▶</span>
+                </div>
+
+                <div class="accordion-content">
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <p class="mr-3">The goal of the game is to capture as many pieces as possible until there are no more moveable pieces on one side of the board, the player with the most points at this point in the game wins. While fluctuating ownership can be tricky, multiple strategies can be used to increase your chances of winning like focusing on defending higher-valued pieces, forcing your opponent to give up their valuable pieces, etc.</p>
+                        <div class="responsive-container text-center">
+                            <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\trophy.JPG" class="responsive-image img-fluid"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Field Promo Accordion-->
+        <div class="accordion">
+            <div class="accordion-item">
+
+                <div class="accordion-header" onclick="toggleAccordion(this)">Field Promotions
+                    <span class="arrow">▶</span>
+                </div>
+
+                <div class="accordion-content">
+                    <p>This game allows players to promote smaller pieces into higher-valued ones by placing one onto another. For example, at the beginning of the game, the top player has the option to move the pawn in the position of the existing drone adjacent to it, making it a queen. This allows players to have more options when it comes to potential moves, which can be crucial in the later parts of the game. Players can also move a pawn onto another pawn making it a drone.</p>
+                    <div class="text-center mt-3">
+                        <img src="C:\Users\ant48\Downloads\Code\Senior Project\mchessRules\site images\mchessMeme.JPG" class="responsive-image img-fluid" style="max-width: 300px; border-radius: 10px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-secondary" onclick="goBack()">Back</button>
+    </div>
+
+    <!--tutorial Content starts-->
+    <div class="container mt-5" id="tutorial" style="display:none">
+        <div class="content mb-3" id="video" style="display: block">
+            <h2>Tutorial</h2>
+            <p>Here's a short video on how the game is played: </p>
+            <div class="d-flex justify-content-center">
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/l4l4b93w_6k?si=VLluNLmTEfnld-gP"
+                    title="YouTube video player" frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+        <button class="btn btn-secondary" onclick="goBack()">Back</button>
+    </div>
+
+    <!--moreGames Content Starts-->
+    <div class="container mt-5" id="moreGames" style="display:none">
+        <h2>More Games</h2>
+        <p>This game is product of board game developer <a href="https://store.looneylabs.com/">Looney Labs.</a></p>
+        <p>More combinatorial games: <a href="https://kyleburke.info/DB/combGames/">CLICK ME!</a> </p>
+        <button class="btn btn-secondary" onclick="goBack()">Back</button>
+    </div>
+
+    <!--JS for Arrow Effect-->
+    <script>
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const item = header.parentElement;
+                item.classList.toggle('active');
+            })
+        })
+    </script>
+
+    <!--JS Function for Accordion Visibility-->
+    <script>
+        function toggleAccordion(header) {
+            const accElements = document.querySelectorAll('.accordion-content'); // gets all elements from accordions
+            
+            // close accordions by looping thru each section and changing the diaplay value
+            accElements.forEach(content => {
+                if (content !== header.nextElementSibling) {
+                    content.style.display = 'none';
+                }
+            });
+
+            // toggle content
+            const content = header.nextElementSibling;
+            content.style.display = content.style.display === 'block' ? 'none' : 'block'; 
+            // the above is a ternary operator checking the display value
+            // upon click, if the value is already equal to block(show content), change it to none and vice versa
+        }
+    </script>
+
+    <!--JS Functions for display and Back buttons-->
+    <script>
+        function showSection(sectionId) { // displays new page of content with option to go back
+            document.getElementById('rules').style.display = 'none';
+            document.getElementById('tutorial').style.display = 'none';
+            document.getElementById('moreGames').style.display = 'none';
+
+            document.getElementById(sectionId).style.display = 'block'; // make sections visible
+
+            document.getElementById('mainContent').style.display = 'none';
+        }
+
+        function goBack() { // hide sections of page by setting display to none
+            document.getElementById('rules').style.display = 'none';
+            document.getElementById('tutorial').style.display = 'none';
+            document.getElementById('moreGames').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block'; // make visible again
+        }
+    </script>
+
+    <!--Bootstrap JS and dependencies-->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

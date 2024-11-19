@@ -1,0 +1,104 @@
+/* General Styles */
+body {
+    background-color: #1c1c1e;
+    color: #E74C3C;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Navbar Custom Styling */
+.navbar {
+    background-color: #2C3E50;
+}
+
+.nav-link {
+    color: #ECF0F1 !important;
+}
+
+.nav-link:hover {
+    color: #E74C3C !important;
+}
+
+/* Main Container Styling */
+.container {
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #34495E;
+}
+
+.responsive-container {
+    width: 50%;
+    text-align: center;
+    justify-content: center;
+}
+
+.responsive-image {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    align-items: center;
+}
+
+h1 {
+    color: #E74C3C;
+    margin-bottom: 20px;
+}
+
+h3 {
+    color:#ECF0F1
+}
+
+p {
+    color: #ECF0F1;
+}
+
+li {
+    font-weight: bold;
+    color:#E74C3C
+}
+
+/*CSS to make front image fit in the section correctly*/
+.section { 
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+/*Styling for accordion--*/
+.accordion {
+    border: 1.75px solid #ffffff;
+    border-radius: 2px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #1F2A38;
+}
+
+.accordion-header {
+    color: #ECF0F1;
+    padding: 10px;
+    background-color: #2C3E50;
+    cursor: pointer;
+    justify-content: space-between;
+    display: flex;
+}
+
+.accordion-content {
+    display: none;
+    padding: 10px;
+    background-color: #34495E;
+    image-orientation: center;
+}
+
+.arrow {
+    transition: transform 0.3s ease;
+}
+
+/* arrow rotation */
+.accordion-item.active .arrow {
+    transform: rotate(90deg); 
+}
+
+.accordion-item:last-child {
+    border-bottom: none;
+}
