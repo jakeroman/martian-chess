@@ -386,7 +386,7 @@ function createBasicGridGameOptionsForMartianChess() {
  * Modified radio player options function to include our AI
  */
 function getMartianChessRadioPlayerOptions(playerId, namesAndPlayerOptions, defaultId) {
-    namesAndPlayerOptions = namesAndPlayerOptions || ["Human", "Random", "Very Easy AI", "Easy AI", "Medium AI", "Tricky AI (slow)", "Greedy AI","Neural Player ✨"];
+    namesAndPlayerOptions = namesAndPlayerOptions || ["Human", "Random", "Very Easy AI", "Easy AI", "Medium AI", "MCTS Player", "Greedy Player","Neuralnet Player ✨"];
     var playerName;
     var defaultIndex = defaultId;
     if (playerId == CombinatorialGame.prototype.LEFT) {
@@ -419,11 +419,11 @@ function getMartianChessRadioPlayerOptions(playerId, namesAndPlayerOptions, defa
                 players.push("new DepthSearchPlayer(1000, 2)");
             } else if (name == "Medium AI") {
                 players.push("new DepthSearchPlayer(1000, 3)");
-            } else if (name.startsWith("Tricky AI")) {
-                players.push("new DepthSearchPlayer(1000, 4)");
-            } else if (name.startsWith("Greedy AI")) {
+            } else if (name.startsWith("MCTS Player")) {
+                players.push("new MCTSPlayer(30, 1000)");
+            } else if (name.startsWith("Greedy Player")) {
                 players.push("new MartianChessGreedyPlayer()");
-            } else if (name.startsWith("Neural Player")) {
+            } else if (name.startsWith("Neuralnet Player")) {
                 players.push("new MartianChessNeuralPlayer()");
             } else {
                 console.log("Didn't see an appropriate player name!!!");
