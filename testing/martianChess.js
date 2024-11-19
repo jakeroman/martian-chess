@@ -351,6 +351,7 @@ var MartianChess = Class.create(ScoringCombinatorialGame, {
         // Update the last move
         var crossesCanal = !(this.checkSpaceOwnership(playerId, toX, toY))
         this.lastMove = [playerId, x, y, toX, toY, crossesCanal]
+
         return true
     },
 });
@@ -573,7 +574,12 @@ const InteractiveMartianChessView = Class.create({
                     pieceTile.setAttributeNS(null, "width", new String(pieceSize));
                     pieceTile.setAttributeNS(null, "posX", new String(i));
                     pieceTile.setAttributeNS(null, "posY", new String(j));
-                    pieceTile.setAttributeNS(null, "class", "martianChessPiece");
+                    if (this.position.lastMove !== undefined && i == this.position.lastMove[3] && j == this.position.lastMove[4]) {
+                        pieceTile.setAttributeNS(null, "class", "martianChessHighlightPiece");
+                    }
+                    else {
+                        pieceTile.setAttributeNS(null, "class", "martianChessPiece");
+                    }
                     boardSvg.appendChild(pieceTile);
                     if (listener != undefined) {
                         var player = listener;
