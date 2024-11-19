@@ -18,8 +18,12 @@ rect.martianChessOddTile {
     stroke: Black;
     stroke-width: 4;
 }
-
-.martianChessSelectedTile{
+.martianChessHighlightPiece {
+    fill: rgb(190, 20, 20);
+    stroke: rgb(255, 190, 27);
+    stroke-width: 4;
+}
+.martianChessSelectedTile {
     fill:#062b58;
     stroke: #68a6f1;
     stroke-width: 4;
