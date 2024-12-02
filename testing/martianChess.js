@@ -720,7 +720,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
                 for (let i = 0; i < optionStates.length; i++) {
                     let lm = optionStates[i].lastMove
                     let rotated_move = playerObject.rotateOptions([[lm[1],lm[2],lm[3],lm[4]]],position.width,position.height)[0]
-                    optionStates[i].lastMove = [optionStates[i][0],rotated_move[0],rotated_move[1],rotated_move[2],rotated_move[3],optionStates[i][5]]
+                    optionStates[i].move = [optionStates[i][0],rotated_move[0],rotated_move[1],rotated_move[2],rotated_move[3],optionStates[i][5]]
                 }
             }
     
@@ -740,7 +740,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
                 let move = moveSpace[i];
                 let legalMove = 0;
                 for (let j = 0; j < optionStates.length; j++) {
-                    let option = optionStates[j].lastMove;
+                    let option = optionStates[j].move;
                     if (move[0] === option[1] && move[1] === option[2] && move[2] == option[3] && move[3] == option[4]) {
                         legalMove = 1;
                     }
@@ -786,7 +786,7 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
             let moveOption = false;
             for (let i = 0; i < optionStates.length; i++) {
                 let option = optionStates[i]
-                if (option.lastMove[1] == mv[0] && option.lastMove[2] == mv[1] && option.lastMove[3] == mv[2] && option.lastMove[4] == mv[3]) {
+                if (option.move[1] == mv[0] && option.move[2] == mv[1] && option.move[3] == mv[2] && option.move[4] == mv[3]) {
                     moveOption = option;
                 }
             }
