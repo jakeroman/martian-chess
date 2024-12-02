@@ -723,6 +723,11 @@ const MartianChessNeuralPlayer = Class.create(ComputerPlayer, {
                     optionStates[i].move = [optionStates[i][0],rotated_move[0],rotated_move[1],rotated_move[2],rotated_move[3],optionStates[i][5]]
                 }
             }
+            else {
+                for (let i = 0; i < optionStates.length; i++) {
+                    optionStates[i].move = optionStates[i].lastMove
+                }
+            }
     
             // Encode & flatten board state
             let encodedBoard = playerObject.oneHotEncodeBoard(board);
