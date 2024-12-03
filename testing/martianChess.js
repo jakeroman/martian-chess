@@ -914,10 +914,14 @@ const MartianChessGreedyPlayer = Class.create(ComputerPlayer, {
             }
             if (score > greediest_score) {
                 greediest_score = score;
-                greediest_option = i;
+                greediest_option = [i];
+            }
+            else if (score >= greediest_score) {
+                greediest_option.push(i)
             }
         }
 
-        window.setTimeout(function(){referee.moveTo(options[greediest_option]);}, this.delayMilliseconds);
+        randomly_selected_greedy_option = greediest_option[Math.floor(Math.random() * (greediest_option.length))];      
+        window.setTimeout(function(){referee.moveTo(options[randomly_selected_greedy_option]);}, this.delayMilliseconds);
     },
 })
